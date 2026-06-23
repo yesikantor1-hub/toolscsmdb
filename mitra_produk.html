@@ -1,0 +1,974 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Mitra & Produk — OpsTools</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
+:root{
+  --bg:#F2F1ED;--surface:#FFF;--s2:#F7F6F2;--border:#E4E2DA;
+  --text:#1A1916;--text2:#6B6860;--text3:#9E9C96;
+  --accent:#2B5CE6;--accent-l:#EEF2FD;--al:#EEF2FD;--alb:#C5D5F8;
+  --red:#D94040;--rl2:#FEE2E2;
+  --green:#1A8A4A;--green-l:#EBF7F0;--gl:#EBF7F0;--gb:#B5E2C8;
+  --warn:#C97B10;--wl:#FEF5E7;
+  --r:8px;--rl:12px;
+  --shadow-md:0 8px 24px rgba(0,0,0,.12);
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:'Plus Jakarta Sans',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;font-size:14px;}
+
+.hdr{background:#111;color:#fff;padding:13px 20px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:200;}
+.hdr h1{font-size:14px;font-weight:800;letter-spacing:-.3px;}
+.hdr h1 span{color:#6ee7b7;}
+#syncStatus{font-size:12px;font-weight:600;}
+
+.tabs{display:flex;background:var(--surface);border-bottom:1px solid var(--border);padding:0 14px;position:sticky;top:48px;z-index:100;overflow-x:auto;}
+.tab{padding:11px 16px;font-size:13px;font-weight:600;color:var(--text3);cursor:pointer;border-bottom:2px solid transparent;white-space:nowrap;transition:all .15s;}
+.tab.active{color:var(--accent);border-bottom-color:var(--accent);}
+.tbadge{display:inline-flex;align-items:center;justify-content:center;min-width:18px;height:18px;border-radius:9px;background:var(--accent);color:#fff;font-size:10px;padding:0 5px;margin-left:5px;}
+
+.wrap{max-width:1180px;margin:0 auto;padding:18px 14px;}
+.panel{display:none;animation:fi .2s;}
+.panel.active{display:block;}
+@keyframes fi{from{opacity:0;transform:translateY(3px)}to{opacity:1}}
+
+.card{background:var(--surface);border:1px solid var(--border);border-radius:var(--rl);padding:16px;margin-bottom:12px;}
+.ct{font-size:13px;font-weight:700;margin-bottom:12px;}
+.btn{display:inline-flex;align-items:center;gap:5px;padding:8px 14px;border-radius:var(--r);font-family:inherit;font-size:13px;font-weight:600;cursor:pointer;transition:all .15s;border:none;}
+.btn-p{background:var(--accent);color:#fff;}.btn-p:hover{background:#1e4ad4;}
+.btn-g{background:var(--green);color:#fff;}.btn-g:hover{background:#146638;}
+.btn-o{background:transparent;border:1px solid var(--border);color:var(--text2);}.btn-o:hover{background:var(--s2);}
+.btn-rd{background:transparent;border:1px solid var(--red);color:var(--red);}
+.btn-sm{padding:5px 11px;font-size:12px;}
+.btn-xs{padding:3px 8px;font-size:11px;}
+
+.frow{display:grid;grid-template-columns:1fr 1fr;gap:11px;}
+.f3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:11px;}
+.fg{display:flex;flex-direction:column;gap:5px;margin-bottom:10px;}
+.fg label{font-size:11px;font-weight:600;color:var(--text2);text-transform:uppercase;letter-spacing:.4px;}
+.fg input,.fg select{border:1px solid var(--border);border-radius:var(--r);padding:8px 11px;font-family:inherit;font-size:13px;background:var(--surface);color:var(--text);width:100%;transition:border .15s;}
+.fg input:focus,.fg select:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 3px rgba(43,92,230,.07);}
+
+.al{padding:9px 12px;border-radius:var(--r);font-size:12px;font-weight:500;margin-bottom:10px;display:flex;gap:7px;}
+.al-i{background:var(--al);color:var(--accent);border:1px solid #C5D5F8;}
+.al-w{background:var(--wl);color:var(--warn);border:1px solid #F3D58F;}
+
+.mitra-search-wrap{position:relative;}
+.mitra-search-wrap input{width:100%;}
+.mitra-dropdown{position:absolute;top:calc(100% + 4px);left:0;right:0;background:var(--surface);border:1px solid var(--border);border-radius:var(--r);box-shadow:0 8px 24px rgba(0,0,0,.1);z-index:300;max-height:220px;overflow-y:auto;display:none;}
+.mitra-dropdown.show{display:block;}
+.mitra-opt{padding:10px 13px;cursor:pointer;border-bottom:1px solid var(--border);transition:background .1s;}
+.mitra-opt:last-child{border-bottom:none;}
+.mitra-opt:hover{background:var(--accent-l);}
+.mitra-opt .mo-name{font-weight:700;font-size:13px;}
+.mitra-opt .mo-meta{font-size:11px;color:var(--text3);margin-top:2px;}
+
+.mdb-table{width:100%;border-collapse:collapse;font-size:13px;}
+.mdb-table th{background:var(--s2);padding:8px 11px;text-align:left;font-size:11px;font-weight:700;color:var(--text3);text-transform:uppercase;border-bottom:1.5px solid var(--border);}
+.mdb-table td{padding:9px 11px;border-bottom:1px solid var(--border);vertical-align:middle;}
+.mdb-table tr:last-child td{border-bottom:none;}
+.mdb-table tr:hover td{background:var(--s2);}
+
+.prod-table{width:100%;border-collapse:collapse;font-size:13px;}
+.prod-table th{background:var(--s2);padding:8px 11px;text-align:left;font-size:11px;font-weight:700;color:var(--text3);text-transform:uppercase;border-bottom:1.5px solid var(--border);white-space:nowrap;}
+.prod-table td{padding:8px 11px;border-bottom:1px solid var(--border);vertical-align:middle;}
+.prod-table tr:last-child td{border-bottom:none;}
+.prod-table tr:hover td{background:var(--s2);}
+.alias-tag{display:inline-block;background:var(--s2);border:1px solid var(--border);border-radius:4px;padding:2px 7px;font-size:11px;font-family:'DM Mono',monospace;margin:2px 2px 2px 0;}
+
+.btabs{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:14px;}
+.btab{padding:6px 12px;border-radius:20px;font-size:12px;font-weight:600;cursor:pointer;border:1.5px solid var(--border);color:var(--text2);transition:all .15s;background:var(--surface);}
+.btab:hover{border-color:var(--accent);color:var(--accent);}
+.btab.active{background:var(--accent);color:#fff;border-color:var(--accent);}
+
+.xl-drop{border:2px dashed var(--border);border-radius:var(--r);padding:22px 16px;text-align:center;cursor:pointer;transition:all .2s;background:var(--s2);position:relative;}
+.xl-drop:hover,.xl-drop.drag{border-color:var(--accent);background:var(--accent-l);}
+.xl-drop input[type=file]{position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%;}
+.xl-drop .xi{font-size:32px;margin-bottom:6px;}
+.xl-drop p{font-size:13px;color:var(--text2);font-weight:500;}
+.xl-drop small{font-size:11px;color:var(--text3);}
+.xl-stat{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px;}
+.xl-stat-item{background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:8px 13px;font-size:12px;display:flex;flex-direction:column;gap:2px;min-width:90px;}
+.xl-stat-item b{font-size:18px;font-weight:700;color:var(--accent);}
+.xl-stat-item span{color:var(--text3);}
+.xl-preview{background:var(--s2);border:1px solid var(--border);border-radius:var(--r);max-height:260px;overflow-y:auto;margin-top:10px;display:none;}
+.xl-preview table{width:100%;border-collapse:collapse;font-size:12px;}
+.xl-preview th{background:var(--text);color:#fff;padding:6px 9px;text-align:left;font-weight:700;white-space:nowrap;}
+.xl-preview td{padding:5px 9px;border-bottom:1px solid var(--border);}
+.xl-preview tr:last-child td{border-bottom:none;}
+.xl-preview tr:nth-child(even) td{background:rgba(0,0,0,.03);}
+
+.modal-bg{position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:400;display:flex;align-items:center;justify-content:center;padding:16px;}
+.modal{background:var(--surface);border-radius:var(--rl);width:100%;max-width:500px;max-height:90vh;overflow-y:auto;padding:22px;box-shadow:var(--shadow-md);}
+.modal-lg{max-width:640px;}
+.modal-title{font-size:15px;font-weight:700;margin-bottom:16px;display:flex;justify-content:space-between;align-items:center;}
+.modal-title button{background:none;border:none;font-size:20px;cursor:pointer;color:var(--text3);line-height:1;}
+
+.empty{text-align:center;padding:48px 20px;color:var(--text3);}
+.empty .ei{font-size:40px;margin-bottom:10px;}
+.empty p{font-size:14px;}
+
+#toast{position:fixed;bottom:22px;right:22px;background:var(--text);color:#fff;padding:10px 18px;border-radius:10px;font-size:13px;font-weight:600;z-index:9999;opacity:0;transition:opacity .2s;pointer-events:none;box-shadow:var(--shadow-md);}
+
+.info-box{background:var(--accent-l);border:1.5px solid #BFCFEF;border-radius:var(--r);padding:12px 14px;margin-bottom:14px;}
+
+@media(max-width:600px){
+  .frow,.f3{grid-template-columns:1fr;}
+}
+</style>
+</head>
+<body>
+<div id="toast"></div>
+
+<div class="hdr">
+  <h1>👥 Mitra & <span>Produk</span> — Database Bersama</h1>
+  <span id="syncStatus">⚪ Memuat...</span>
+</div>
+
+<div class="tabs">
+  <div class="tab active" id="tab-mitra" onclick="showTab('mitra')">👥 Mitra <span class="tbadge" id="mitraCount">0</span></div>
+  <div class="tab" id="tab-produk" onclick="showTab('produk')">📦 Produk</div>
+</div>
+
+<div class="wrap">
+
+<!-- ===== PANEL: MITRA ===== -->
+<div class="panel active" id="panel-mitra">
+  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;flex-wrap:wrap;gap:8px;">
+    <span style="font-size:13px;color:var(--text2);font-weight:500;">Database mitra — dipakai bersama oleh CS FU, CS RO, dan Admin</span>
+    <div style="display:flex;gap:8px;flex-wrap:wrap;">
+      <input type="text" id="mitraFilter" placeholder="Cari nama / kode..." oninput="renderMitraDB()" style="border:1.5px solid var(--border);border-radius:var(--r);padding:7px 11px;font-family:inherit;font-size:13px;width:180px;">
+      <button class="btn btn-o btn-sm" onclick="exportMitraExcel()">⬆️ Export</button>
+      <button class="btn btn-o btn-sm" onclick="openXlModal()">📥 Import Excel</button>
+      <button class="btn btn-p btn-sm" onclick="openMitraModal()">+ Tambah Mitra</button>
+    </div>
+  </div>
+  <div class="card" style="padding:0;overflow:hidden;">
+    <div style="overflow-x:auto;">
+      <table class="mdb-table">
+        <thead><tr><th>Kode</th><th>Nama</th><th>No Telp</th><th>Brand</th><th>Ekspedisi</th><th>Alamat</th><th></th></tr></thead>
+        <tbody id="mitraDBBody"></tbody>
+      </table>
+    </div>
+  </div>
+  <div id="mitraEmpty" class="empty" style="display:none;"><div class="ei">👥</div><p>Belum ada data mitra.<br>Klik <b>+ Tambah Mitra</b>.</p></div>
+</div>
+
+<!-- ===== PANEL: PRODUK ===== -->
+<div class="panel" id="panel-produk">
+  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;flex-wrap:wrap;gap:8px;">
+    <span style="font-size:13px;color:var(--text2);font-weight:500;">Kelola produk & alias pengenalan kata kunci — dipakai bersama semua tools</span>
+    <button class="btn btn-p btn-sm" onclick="openProdModal()">+ Tambah Produk</button>
+  </div>
+
+  <div class="al al-i">
+    💡 <b>Alias</b> adalah kata kunci yang diketik mitra saat order WA. Semakin banyak alias, semakin akurat deteksi otomatis. Contoh: <b>makaroni</b> → akan terdeteksi sebagai <b>Macaroni Mateng</b>.
+  </div>
+
+  <div class="btabs" id="prodBrandTabs"></div>
+  <div class="btabs" id="prodKatTabs"></div>
+
+  <div class="card" style="padding:0;overflow:hidden;">
+    <div style="overflow-x:auto;">
+      <table class="prod-table">
+        <thead><tr><th>Kode</th><th>Nama Produk</th><th>Kategori</th><th>Satuan</th><th>Harga</th><th>Alias / Keyword</th><th></th></tr></thead>
+        <tbody id="prodTableBody"></tbody>
+      </table>
+    </div>
+  </div>
+  <div id="prodEmpty" class="empty" style="display:none;"><div class="ei">📦</div><p>Belum ada produk untuk brand ini.</p></div>
+</div>
+
+</div><!-- /wrap -->
+
+<!-- ===== MODAL: TAMBAH/EDIT MITRA ===== -->
+<div class="modal-bg" id="mitraModal" style="display:none;" onclick="if(event.target===this)closeMitraModal()">
+  <div class="modal">
+    <div class="modal-title"><span id="mitraModalTitle">Tambah Mitra</span><button onclick="closeMitraModal()">✕</button></div>
+    <div class="frow">
+      <div class="fg"><label>Kode Mitra *</label><input id="mm_kode" placeholder="cth: 2605003"></div>
+      <div class="fg"><label>Nama Mitra *</label><input id="mm_nama" placeholder="Nama lengkap"></div>
+    </div>
+    <div class="frow">
+      <div class="fg"><label>No. Telepon</label><input id="mm_telp" placeholder="628xxx"></div>
+      <div class="fg"><label>Ekspedisi Default</label>
+        <select id="mm_eksp"><option value="">-- Pilih --</option><option>JNT Cargo</option><option>JNT Express</option><option>JNE Cargo</option><option>JNE Express</option><option>SiCepat</option><option>SiCepat HALU</option><option>Anteraja</option><option>Ninja Xpress</option><option>Lion Parcel</option><option>Wahana</option><option>ID Express</option><option>POS Indonesia</option><option>Gosend</option><option>Grab Express</option><option>Lalamove</option><option>COD</option><option>Ambil Sendiri</option></select>
+      </div>
+    </div>
+    <div class="fg"><label>Alamat Lengkap</label><input id="mm_alamat" placeholder="Jalan, RT/RW, Kelurahan, Kecamatan, Kota"></div>
+    <div class="fg"><label>Brand Utama</label>
+      <select id="mm_brand"><option value="">-- Pilih --</option><option value="ngemiloh">Ngemiloh</option><option value="melumer">Melumer</option><option value="gokuah">Gokuah</option><option value="yamie">Yamie Curry</option><option value="bacigor">Bacigor Mamang</option></select>
+    </div>
+    <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:16px;">
+      <button class="btn btn-o" onclick="closeMitraModal()">Batal</button>
+      <button class="btn btn-p" onclick="saveMitraModal()">Simpan</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===== MODAL: TAMBAH/EDIT PRODUK ===== -->
+<div class="modal-bg" id="prodModal" style="display:none;" onclick="if(event.target===this)closeProdModal()">
+  <div class="modal modal-lg">
+    <div class="modal-title"><span id="prodModalTitle">Tambah Produk</span><button onclick="closeProdModal()">✕</button></div>
+    <div class="frow">
+      <div class="fg"><label>Kode Produk *</label><input id="pm_code" placeholder="cth: NG-XYZ"></div>
+      <div class="fg"><label>Nama Produk *</label><input id="pm_name" placeholder="Nama resmi produk"></div>
+    </div>
+    <div class="f3">
+      <div class="fg"><label>Satuan *</label>
+        <select id="pm_unit"><option value="kg">kg</option><option value="pcs">pcs</option><option value="pack">pack</option><option value="500gr">500gr</option><option value="200gr">200gr</option><option value="100gr">100gr</option></select>
+      </div>
+      <div class="fg"><label>Harga (Rp) *</label><input type="number" id="pm_harga" placeholder="35000"></div>
+      <div class="fg"><label>Berat (gram)</label><input type="number" id="pm_berat" placeholder="1000"></div>
+    </div>
+    <div class="fg"><label>Kategori</label>
+      <select id="pm_kategori">
+        <option value="bahan baku">Bahan Baku</option>
+        <option value="saus">Saus</option>
+        <option value="bumbu">Bumbu</option>
+        <option value="kemasan">Kemasan</option>
+        <option value="perlengkapan">Perlengkapan</option>
+      </select>
+    </div>
+    <div class="fg">
+      <label>Alias / Keyword Pengenalan</label>
+      <input id="pm_alias_input" placeholder="Ketik alias lalu tekan Enter atau koma..." onkeydown="aliasKeydown(event)">
+      <small style="font-size:11px;color:var(--text3);margin-top:3px;">Pisahkan dengan Enter atau koma. Contoh: makaroni, macaroni, mac mateng</small>
+      <div id="pm_alias_tags" style="display:flex;flex-wrap:wrap;gap:4px;margin-top:6px;"></div>
+    </div>
+    <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:16px;">
+      <button class="btn btn-o" onclick="closeProdModal()">Batal</button>
+      <button class="btn btn-p" onclick="saveProdModal()">Simpan Produk</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===== MODAL: IMPORT EXCEL MITRA ===== -->
+<div class="modal-bg" id="xlModal" style="display:none;" onclick="if(event.target===this)closeXlModal()">
+  <div class="modal modal-lg">
+    <div class="modal-title"><span>📥 Import Mitra dari Excel</span><button onclick="closeXlModal()">✕</button></div>
+    <div id="xlStep1">
+      <div class="al al-i">ℹ️ Format kolom: <b>Kode Mitra, Nama, No Telp, Alamat, Ekspedisi, Brand</b></div>
+      <div style="display:flex;gap:8px;margin-bottom:12px;">
+        <button class="btn btn-o btn-sm" onclick="downloadTemplate()">⬇️ Download Template</button>
+        <button class="btn btn-o btn-sm" onclick="document.getElementById('xlFile').click()">📂 Pilih File</button>
+      </div>
+      <div class="xl-drop" id="xlDrop" ondragover="xlDragOver(event)" ondragleave="xlDragLeave()" ondrop="xlDropEv(event)">
+        <input type="file" id="xlFile" accept=".xlsx,.xls,.csv" onchange="xlFileChange(this)">
+        <div class="xi">📊</div>
+        <p>Drag & drop file Excel di sini</p>
+        <small>.xlsx / .xls / .csv — Maks 5MB</small>
+      </div>
+    </div>
+    <div id="xlStep2" style="display:none;">
+      <div class="xl-stat" id="xlStat"></div>
+      <div class="xl-preview" id="xlPreview"><table><thead id="xlHead"></thead><tbody id="xlBody"></tbody></table></div>
+      <div class="al al-w" id="xlWarn" style="display:none;margin-top:10px;"></div>
+      <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:14px;flex-wrap:wrap;">
+        <button class="btn btn-o" onclick="xlReset()">← Ganti File</button>
+        <select id="xlDupMode" style="border:1.5px solid var(--border);border-radius:var(--r);padding:7px 10px;font-family:inherit;font-size:12px;background:var(--surface);">
+          <option value="skip">Duplikat: Lewati</option>
+          <option value="update">Duplikat: Update</option>
+        </select>
+        <button class="btn btn-g" onclick="doImport()">✅ Import Sekarang</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+const BRAND_DEFAULTS = {
+  ngemiloh:{label:'Ngemiloh',color:'#D97706',products:[
+    {code:'NG-MM06',name:'Macaroni Mateng',unit:'kg',harga:35000,berat:1000,alias:['makaroni mateng','makaroni','macaroni','makaroni matang','mac mateng']},
+    {code:'NG-ML08',name:'Mie Lidi',unit:'kg',harga:33000,berat:1000,alias:['mie lidi','mi lidi']},
+    {code:'NG-P09',name:'Pilus',unit:'kg',harga:32500,berat:1000,alias:['pilus']},
+    {code:'NG-MK10',name:'Mie Kremes',unit:'kg',harga:33000,berat:1000,alias:['mie kremes','mi kremes']},
+    {code:'NG-T11',name:'Tempe',unit:'kg',harga:43000,berat:1000,alias:['tempe','tempeh']},
+    {code:'NG-B12',name:'Basreng',unit:'kg',harga:44000,berat:1000,alias:['basreng','baso goreng']},
+    {code:'NG-U13',name:'Usus',unit:'kg',harga:65000,berat:1000,alias:['usus']},
+    {code:'NG-MG14',name:'Mie Gulung',unit:'kg',harga:62000,berat:1000,alias:['mie gulung','mi gulung']},
+    {code:'NGK5U',name:'Pangsit',unit:'kg',harga:42000,berat:1000,alias:['pangsit']},
+    {code:'NGAW9',name:'Kerapu',unit:'kg',harga:50000,berat:1000,alias:['kerapu']},
+    {code:'NGNVZ',name:'Pare',unit:'kg',harga:62000,berat:1000,alias:['pare']},
+    {code:'NG-SK15',name:'Saus Keju',unit:'kg',harga:55000,berat:1000,alias:['saus keju','saos keju','sauce keju']},
+    {code:'NG-SPL16',name:'Saus Pedas Level 5',unit:'kg',harga:29000,berat:1000,alias:['saus pedas level 5','saos pedas lv5','saus pedas','saos pedas']},
+    {code:'NG-CO19',name:'Chili Oil',unit:'kg',harga:87000,berat:1000,alias:['chili oil','cili oil']},
+    {code:'NG-SB17',name:'Saus BBQ',unit:'kg',harga:54000,berat:1000,alias:['saus bbq','saos bbq']},
+    {code:'NGUIG',name:'Saus Bolognese 500gr',unit:'500gr',harga:41500,berat:500,alias:['saus bolognese','saos bolognese','bolognese']},
+    {code:'NGE1E',name:'Bumbu Tabur Original 100gr',unit:'100gr',harga:5800,berat:100,alias:['bumbu original','bt ori','tabur original','bumbu tabur original']},
+    {code:'NG8P1',name:'Bumbu Tabur Keju 100gr',unit:'100gr',harga:5800,berat:100,alias:['bumbu keju','bt keju','tabur keju']},
+    {code:'NGBL2',name:'Bumbu Tabur Jagung Manis 100gr',unit:'100gr',harga:5800,berat:100,alias:['bumbu jagung manis','bt jagung','jagung manis']},
+    {code:'NGIV7',name:'Bumbu Tabur Pedas Level 5 100gr',unit:'100gr',harga:6800,berat:100,alias:['bumbu pedas level 5','bumbu pedas lv5','bt pedas','tabur pedas','bumbu pedas']},
+    {code:'NGF0C',name:'Bumbu Tabur PDJ 100gr',unit:'100gr',harga:7500,berat:100,alias:['bumbu pdj','bt pdj','tabur pdj','pdj']},
+    {code:'NG571',name:'Bumbu Tabur Rendang 100gr',unit:'100gr',harga:8000,berat:100,alias:['bumbu rendang','bt rendang','tabur rendang']},
+    {code:'NGSUQ',name:'Bumbu Tabur Sapi Panggang 100gr',unit:'100gr',harga:8600,berat:100,alias:['bumbu sapi panggang','bt sapi','sapi panggang']},
+    {code:'NGTDD',name:'Bumbu Tabur Rumput Laut 100gr',unit:'100gr',harga:10500,berat:100,alias:['bumbu rumput laut','bt rumput laut','rumput laut']},
+    {code:'NGL59',name:'Bumbu Tabur BBQ 100gr',unit:'100gr',harga:8300,berat:100,alias:['bumbu bbq','bt bbq','tabur bbq']},
+    {code:'NGIFA',name:'Bumbu Tabur Balado Super Pedas 100gr',unit:'100gr',harga:8700,berat:100,alias:['bumbu balado','bt balado','balado super pedas']},
+    {code:'NGDUH',name:'Bumbu Tabur Asin Daun Jeruk 100gr',unit:'100gr',harga:9300,berat:100,alias:['bumbu asin daun jeruk','bumbu daun jeruk','daun jeruk']},
+    {code:'NG902',name:'Bumbu Tabur Ayam Bawang 100gr',unit:'100gr',harga:9000,berat:100,alias:['bumbu ayam bawang','bt ayam bawang','ayam bawang']},
+  ]},
+  melumer:{label:'Melumer',color:'#1D4ED8',products:[
+    {code:'ML-MM',name:'Macaroni Mateng',unit:'kg',harga:35000,berat:1000,alias:['makaroni mateng','makaroni','macaroni','makaroni matang']},
+    {code:'ML-ML',name:'Mie Lidi',unit:'kg',harga:33000,berat:1000,alias:['mie lidi','mi lidi']},
+    {code:'ML-P',name:'Pilus',unit:'kg',harga:32500,berat:1000,alias:['pilus']},
+    {code:'ML-MK',name:'Mie Kremes',unit:'kg',harga:33000,berat:1000,alias:['mie kremes','mi kremes']},
+    {code:'ML-T',name:'Tempe',unit:'kg',harga:43000,berat:1000,alias:['tempe']},
+    {code:'ML-B',name:'Basreng',unit:'kg',harga:44000,berat:1000,alias:['basreng']},
+    {code:'ML-U',name:'Usus',unit:'kg',harga:65000,berat:1000,alias:['usus']},
+    {code:'ML-MG',name:'Mie Gulung',unit:'kg',harga:62000,berat:1000,alias:['mie gulung','mi gulung']},
+    {code:'ML-PS',name:'Pangsit',unit:'kg',harga:42000,berat:1000,alias:['pangsit']},
+    {code:'ML-SK',name:'Saus Keju',unit:'kg',harga:55000,berat:1000,alias:['saus keju','saos keju']},
+    {code:'ML-SPL',name:'Saus Pedas Level 5',unit:'kg',harga:29000,berat:1000,alias:['saus pedas','saos pedas']},
+    {code:'ML-CO',name:'Chili Oil',unit:'kg',harga:87000,berat:1000,alias:['chili oil','cili oil']},
+    {code:'ML-SBQ',name:'Saus BBQ',unit:'kg',harga:54000,berat:1000,alias:['saus bbq','saos bbq']},
+    {code:'ML-SBL',name:'Saus Bolognese 500gr',unit:'500gr',harga:41500,berat:500,alias:['saus bolognese','bolognese']},
+    {code:'ML-NR',name:'Nori 200gr',unit:'200gr',harga:50000,berat:200,alias:['nori']},
+    {code:'ML-BO',name:'Bumbu Tabur Original 100gr',unit:'100gr',harga:5800,berat:100,alias:['bumbu original','bt ori']},
+    {code:'ML-BK',name:'Bumbu Tabur Keju 100gr',unit:'100gr',harga:5800,berat:100,alias:['bumbu keju','bt keju']},
+    {code:'ML-BJ',name:'Bumbu Tabur Jagung Manis 100gr',unit:'100gr',harga:5800,berat:100,alias:['bumbu jagung manis','jagung manis']},
+    {code:'ML-BP',name:'Bumbu Tabur Pedas Lv5 100gr',unit:'100gr',harga:6800,berat:100,alias:['bumbu pedas lv5','bt pedas']},
+    {code:'ML-BD',name:'Bumbu Tabur Pedas Daun Jeruk 100gr',unit:'100gr',harga:7500,berat:100,alias:['bumbu daun jeruk','pdj','daun jeruk']},
+    {code:'ML-BS',name:'Bumbu Tabur Sapi Panggang 100gr',unit:'100gr',harga:8600,berat:100,alias:['bumbu sapi panggang','bt sapi']},
+    {code:'ML-BR',name:'Bumbu Tabur Rumput Laut 100gr',unit:'100gr',harga:10500,berat:100,alias:['bumbu rumput laut','rumput laut']},
+  ]},
+  gokuah:{label:'Gokuah',color:'#DC2626',products:[
+    {code:'GK-CKP',name:'Cuanki Keju Pedas',unit:'pcs',harga:8000,berat:0,alias:['cuanki keju pedas','cuanki keju']},
+    {code:'GK-CAB',name:'Cuanki Ayam Bawang',unit:'pcs',harga:8000,berat:0,alias:['cuanki ayam bawang','cuanki ayam']},
+    {code:'GK-CPJ',name:'Cuanki Pedas Juara',unit:'pcs',harga:8000,berat:0,alias:['cuanki pedas juara','cuanki pedas']},
+    {code:'GK-BKP',name:'Bakso Keju Pedas',unit:'pcs',harga:8000,berat:0,alias:['bakso keju pedas','bakso keju']},
+    {code:'GK-BKS',name:'Bakso Kaldu Spesial',unit:'pcs',harga:8000,berat:0,alias:['bakso kaldu spesial','bakso kaldu']},
+    {code:'GK-BPJ',name:'Bakso Pedas Juara',unit:'pcs',harga:8000,berat:0,alias:['bakso pedas juara','bakso pedas']},
+    {code:'GK-BTKP',name:'Batagor Keju Pedas',unit:'pcs',harga:8000,berat:0,alias:['batagor keju pedas','batagor keju']},
+    {code:'GK-BTAB',name:'Batagor Ayam Bawang',unit:'pcs',harga:8000,berat:0,alias:['batagor ayam bawang','batagor ayam']},
+    {code:'GK-BTPJ',name:'Batagor Pedas Juara',unit:'pcs',harga:8000,berat:0,alias:['batagor pedas juara','batagor pedas']},
+    {code:'GK-PB',name:'Paperbowl',unit:'pcs',harga:1250,berat:0,alias:['paperbowl','paper bowl','bowl']},
+    {code:'GK-TTP',name:'Tutup',unit:'pcs',harga:250,berat:0,alias:['tutup']},
+    {code:'GK-SDK',name:'Sendok Bebek',unit:'pcs',harga:200,berat:0,alias:['sendok bebek','sendok']},
+    {code:'GK-SP',name:'Saus Pedas',unit:'kg',harga:29000,berat:1000,alias:['saus pedas','saos pedas']},
+    {code:'GK-CO',name:'Chili Oil',unit:'kg',harga:87000,berat:1000,alias:['chili oil','cili oil']},
+    {code:'GK-PGS',name:'Pangsit',unit:'kg',harga:42000,berat:1000,alias:['pangsit']},
+  ]},
+  yamie:{label:'Yamie Curry',color:'#15803D',products:[
+    {code:'YC-GC',name:'Golden Curry',unit:'pcs',harga:7000,berat:0,alias:['golden curry','golden']},
+    {code:'YC-CF',name:'Curry Fire',unit:'pcs',harga:7500,berat:0,alias:['curry fire']},
+    {code:'YC-CRF',name:'Creamy Fire',unit:'pcs',harga:7500,berat:0,alias:['creamy fire','creamy']},
+    {code:'YC-FS',name:'Fried Series',unit:'pcs',harga:7000,berat:0,alias:['fried series','fried']},
+    {code:'YC-AS',name:'Authentic Series',unit:'pcs',harga:7000,berat:0,alias:['authentic series','authentic']},
+    {code:'YC-FB',name:'Fire Blast',unit:'pcs',harga:7000,berat:0,alias:['fire blast']},
+    {code:'YC-NR',name:'Nori 1 Box 24 Lembar',unit:'pack',harga:35000,berat:0,alias:['nori']},
+    {code:'YC-PB',name:'Paperbowl',unit:'pcs',harga:1800,berat:0,alias:['paperbowl','bowl']},
+    {code:'YC-TTP',name:'Tutup',unit:'pcs',harga:300,berat:0,alias:['tutup']},
+    {code:'YC-SDK',name:'Sendok Bebek',unit:'pcs',harga:200,berat:0,alias:['sendok bebek','sendok']},
+    {code:'YC-SPT',name:'Sumpit',unit:'pcs',harga:300,berat:0,alias:['sumpit']},
+    {code:'YC-SP',name:'Saus Pedas',unit:'kg',harga:29000,berat:1000,alias:['saus pedas','saos pedas']},
+    {code:'YC-CO',name:'Chili Oil',unit:'kg',harga:87000,berat:1000,alias:['chili oil','cili oil']},
+  ]},
+  bacigor:{label:'Bacigor Mamang',color:'#7C3AED',products:[
+    {code:'BC-CCP',name:'Cuanki Creamy Pedas',unit:'pcs',harga:8000,berat:0,alias:['cuanki creamy pedas','cuanki creamy']},
+    {code:'BC-CKA',name:'Cuanki Kaldu Ayam',unit:'pcs',harga:8000,berat:0,alias:['cuanki kaldu ayam','cuanki kaldu']},
+    {code:'BC-CPS',name:'Cuanki Pedas Super',unit:'pcs',harga:8000,berat:0,alias:['cuanki pedas super','cuanki pedas']},
+    {code:'BC-BCP',name:'Bakso Creamy Pedas',unit:'pcs',harga:8000,berat:0,alias:['bakso creamy pedas','bakso creamy']},
+    {code:'BC-BKA',name:'Bakso Kaldu Ayam',unit:'pcs',harga:8000,berat:0,alias:['bakso kaldu ayam','bakso kaldu']},
+    {code:'BC-BPS',name:'Bakso Pedas Super',unit:'pcs',harga:8000,berat:0,alias:['bakso pedas super','bakso pedas']},
+    {code:'BC-BTCP',name:'Batagor Creamy Pedas',unit:'pcs',harga:8000,berat:0,alias:['batagor creamy pedas','batagor creamy']},
+    {code:'BC-BTKA',name:'Batagor Kaldu Ayam',unit:'pcs',harga:8000,berat:0,alias:['batagor kaldu ayam','batagor kaldu']},
+    {code:'BC-BTPS',name:'Batagor Pedas Super',unit:'pcs',harga:8000,berat:0,alias:['batagor pedas super','batagor pedas']},
+    {code:'BC-BSR',name:'Basreng',unit:'kg',harga:44000,berat:1000,alias:['basreng']},
+    {code:'BC-PLU',name:'Pilus',unit:'kg',harga:32500,berat:1000,alias:['pilus']},
+    {code:'BC-SMY',name:'Siomay',unit:'kg',harga:48000,berat:1000,alias:['siomay','siomai']},
+    {code:'BC-USU',name:'Usus',unit:'kg',harga:65000,berat:1000,alias:['usus']},
+    {code:'BC-PGS',name:'Pangsit',unit:'kg',harga:50000,berat:1000,alias:['pangsit']},
+    {code:'BC-PB',name:'Paperbowl',unit:'pcs',harga:1800,berat:0,alias:['paperbowl','bowl']},
+    {code:'BC-TTP',name:'Tutup',unit:'pcs',harga:300,berat:0,alias:['tutup']},
+    {code:'BC-SDK',name:'Sendok Bebek',unit:'pcs',harga:200,berat:0,alias:['sendok bebek','sendok']},
+    {code:'BC-SP',name:'Saus Pedas',unit:'kg',harga:29000,berat:1000,alias:['saus pedas']},
+  ]},
+};
+
+function normalizeUnit(raw){
+  if(!raw) return '';
+  let u = String(raw).trim().toLowerCase();
+  // Hapus angka "1 " di awal (misal "1 kg" → "kg", "1 pcs" → "pcs")
+  u = u.replace(/^1\s+/, '');
+  // Normalize gram variants: "gram" → "gr"
+  u = u.replace(/\s*gram$/, 'gr').replace(/\s*gr$/, 'gr');
+  // "100 gr" → "100gr", "500 gr" → "500gr"
+  u = u.replace(/^(\d+)\s*gr$/, '$1gr');
+  // Trim spaces: "1 kg" → "kg"
+  u = u.replace(/\s+/g,'');
+  // Known mappings
+  if(u==='kilogram') return 'kg';
+  if(u==='pack'||u==='pak') return 'pack';
+  return u;
+}
+
+function parseProdUnitToGram(unit){
+  const u = normalizeUnit(unit);
+  if(!u) return 0;
+  if(u==='kg') return 1000;
+  const m = u.match(/^(\d+)gr$/);
+  if(m) return parseInt(m[1]);
+  return 0;
+}
+
+function norm(s){ return s.toLowerCase().replace(/[^a-z0-9\s]/g,'').replace(/\s+/g,' ').trim(); }
+
+function sim(a,b){
+  a=norm(a); b=norm(b);
+  if(!a||!b) return 0;
+  if(a===b) return 1;
+  if(b.includes(a)||a.includes(b)) return 0.9;
+  const ta=a.split(' '), tb=b.split(' ');
+  let m=0;
+  ta.forEach(t=>{ if(tb.some(x=>x.startsWith(t)||t.startsWith(x))) m++; });
+  const baseScore = m/Math.max(ta.length,tb.length);
+  // Bonus: kalau semua kata dari query ada di target (subset match)
+  // misal "keju pedas" cocok ke "cuanki keju pedas"
+  if(ta.every(t=>tb.some(x=>x.includes(t)||t.includes(x)))) return Math.max(baseScore, 0.8);
+  return baseScore;
+}
+
+function inferKategori(p){
+  const n=(p.name||'').toLowerCase();
+  if(n.includes('bumbu')) return 'bumbu';
+  if(n.includes('saus')||n.includes('saos')||n.includes('chili oil')||n.includes('cili oil')) return 'saus';
+  if(n.includes('paperbowl')||n.includes('paper bowl')||n.includes('bowl')||n.includes('tutup')||n.includes('foodpail')||n.includes('food pail')||n.includes('cup')||n.includes('kemasan')||n.includes('plastik')||n.includes('mika')||n.includes('sealer')||n.includes('label')) return 'kemasan';
+  if(n.includes('sendok')||n.includes('sumpit')||n.includes('garpu')||n.includes('tissue')||n.includes('tisu')) return 'perlengkapan';
+  return 'bahan baku';
+}
+
+function renderMitraDB(){
+  const q=(document.getElementById('mitraFilter')?.value||'').toLowerCase();
+  const list=q?mitraDB.filter(m=>m.nama.toLowerCase().includes(q)||m.kode.toLowerCase().includes(q)):mitraDB;
+  const body=document.getElementById('mitraDBBody');
+  const empty=document.getElementById('mitraEmpty');
+  if(!list.length){body.innerHTML='';empty.style.display='block';return;}
+  empty.style.display='none';
+  body.innerHTML=list.map(m=>`
+    <tr>
+      <td><b style="font-family:'DM Mono',monospace;font-size:12px;">${m.kode}</b></td>
+      <td>${m.nama}</td>
+      <td style="font-size:12px;color:var(--text2)">${m.telp||'—'}</td>
+      <td><span style="font-size:11px;font-weight:600;padding:2px 9px;border-radius:20px;background:${BRANDS[m.brand]?.color||'#888'}22;color:${BRANDS[m.brand]?.color||'#888'}">${BRANDS[m.brand]?.label||m.brand||'—'}</span></td>
+      <td style="font-size:12px;color:var(--text2)">${m.eksp||'—'}</td>
+      <td style="font-size:12px;color:var(--text2);max-width:180px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${m.alamat||'—'}</td>
+      <td><div style="display:flex;gap:5px;">
+        <button class="btn btn-o btn-xs" onclick="openMitraModal('${m.id}')">✏️</button>
+        <button class="btn btn-rd btn-xs" onclick="delMitra('${m.id}')">🗑</button>
+      </div></td>
+    </tr>`).join('');
+}
+
+function searchMitra(q){
+  const dd=document.getElementById('mitraDD');
+  if(!q.trim()){dd.classList.remove('show');return;}
+  const ql=q.toLowerCase();
+  const results=mitraDB.filter(m=>m.nama.toLowerCase().includes(ql)||m.kode.toLowerCase().includes(ql)).slice(0,8);
+  if(!results.length){dd.classList.remove('show');return;}
+  dd.innerHTML=results.map(m=>`
+    <div class="mitra-opt" onmousedown="fillMitraFromDB('${m.id}')">
+      <div class="mo-name">${m.nama} <span style="font-size:11px;color:var(--text3)">[${m.kode}]</span></div>
+      <div class="mo-meta">${BRANDS[m.brand]?.label||m.brand||'—'} · ${m.eksp||'—'} · ${m.telp||'—'}</div>
+    </div>`).join('');
+  dd.classList.add('show');
+}
+
+function hideMitraDD(){ document.getElementById('mitraDD').classList.remove('show'); }
+
+function fillMitraFromDB(id){
+  const m=mitraDB.find(x=>x.id===id); if(!m) return;
+  document.getElementById('f_kode').value   = m.kode||'';
+  document.getElementById('f_nama').value   = m.nama||'';
+  document.getElementById('f_telp').value   = m.telp||'';
+  document.getElementById('f_alamat').value = m.alamat||'';
+  const s4tf=document.getElementById('f_tf'); if(s4tf) s4tf.value=m.tf||'';
+  const s4eksp=document.getElementById('f_eksp'); if(s4eksp && m.eksp) setSelVal(s4eksp, m.eksp);
+  if(m.brand) selBrand(m.brand);
+  document.getElementById('mitraSearch').value='';
+  hideMitraDD();
+  document.getElementById('mitraFilled').style.display='flex';
+  toast('✅ Data mitra diisi dari database!');
+}
+
+function openMitraModal(id=null){
+  editMitraId=id;
+  document.getElementById('mitraModalTitle').textContent=id?'Edit Mitra':'Tambah Mitra';
+  const m=id?mitraDB.find(x=>x.id===id):null;
+  document.getElementById('mm_kode').value   = m?.kode||'';
+  document.getElementById('mm_nama').value   = m?.nama||'';
+  document.getElementById('mm_telp').value   = m?.telp||'';
+  document.getElementById('mm_alamat').value = m?.alamat||'';
+  document.getElementById('mm_eksp').value   = m?.eksp||'';
+  document.getElementById('mm_brand').value  = m?.brand||'';
+  document.getElementById('mitraModal').style.display='flex';
+}
+
+function closeMitraModal(){ document.getElementById('mitraModal').style.display='none'; }
+
+function saveMitraModal(){
+  const kode=document.getElementById('mm_kode').value.trim();
+  const nama=document.getElementById('mm_nama').value.trim();
+  if(!kode||!nama){toast('⚠️ Kode dan Nama wajib diisi!');return;}
+  const data={
+    id:editMitraId||Date.now().toString(),
+    kode,nama,
+    telp:  document.getElementById('mm_telp').value,
+    alamat:document.getElementById('mm_alamat').value,
+    eksp:  document.getElementById('mm_eksp').value,
+    brand: document.getElementById('mm_brand').value,
+    tf:'',
+  };
+  if(editMitraId){const i=mitraDB.findIndex(x=>x.id===editMitraId);if(i>=0)mitraDB[i]=data;}
+  else mitraDB.unshift(data);
+  saveMitraRemote(data);closeMitraModal();renderMitraDB();updMitraCount();
+  toast('✅ Data mitra tersimpan!');
+}
+
+function delMitra(id){
+  if(!confirm('Hapus mitra ini?')) return;
+  mitraDB=mitraDB.filter(x=>x.id!==id);
+  deleteMitraRemote(id);renderMitraDB();updMitraCount();
+  toast('🗑 Mitra dihapus.');
+}
+
+function exportMitraExcel(){
+  try{
+    if(typeof XLSX === 'undefined'){
+      toast('❌ Library Excel belum siap, tunggu sebentar lalu coba lagi.');
+      return;
+    }
+    if(!mitraDB || !mitraDB.length){
+      toast('⚠️ Belum ada data mitra untuk diekspor (total: '+(mitraDB?mitraDB.length:0)+')');
+      return;
+    }
+    const rows=[XL_COLS];
+    mitraDB.forEach(m=>rows.push([m.kode||'',m.nama||'',m.telp||'',m.alamat||'',m.eksp||'',BRANDS[m.brand]?.label||m.brand||'']));
+    const ws=XLSX.utils.aoa_to_sheet(rows);
+    ws['!cols']=[{wch:14},{wch:25},{wch:18},{wch:40},{wch:16},{wch:18}];
+    const wb=XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb,ws,'Data Mitra');
+    XLSX.writeFile(wb,'data-mitra-export-'+Date.now()+'.xlsx');
+    toast('⬆️ '+mitraDB.length+' data mitra berhasil diekspor!');
+  }catch(err){
+    console.error('Export error:', err);
+    toast('❌ Gagal export: '+err.message);
+  }
+}
+
+function downloadTemplate(){
+  const ws=XLSX.utils.aoa_to_sheet([XL_COLS,['2605001','Muhammad Akmal','628951234567','Jl. Kartini No.1','JNT Cargo','ngemiloh'],['2605002','Siti Rahayu','628987654321','Jl. Pahlawan No.5','JNE Express','melumer']]);
+  ws['!cols']=[{wch:14},{wch:25},{wch:18},{wch:40},{wch:16},{wch:18}];
+  const wb=XLSX.utils.book_new();XLSX.utils.book_append_sheet(wb,ws,'Data Mitra');
+  XLSX.writeFile(wb,'template-data-mitra.xlsx');
+  toast('⬇️ Template diunduh!');
+}
+
+function openXlModal(){xlReset();document.getElementById('xlModal').style.display='flex';}
+
+function closeXlModal(){document.getElementById('xlModal').style.display='none';}
+
+function xlDragOver(e){e.preventDefault();document.getElementById('xlDrop').classList.add('drag');}
+
+function xlDragLeave(){document.getElementById('xlDrop').classList.remove('drag');}
+
+function xlDropEv(e){e.preventDefault();xlDragLeave();const file=e.dataTransfer.files[0];if(file)parseXlFile(file);}
+
+function xlFileChange(input){if(input.files[0])parseXlFile(input.files[0]);}
+
+function xlReset(){xlParsed=[];document.getElementById('xlStep1').style.display='block';document.getElementById('xlStep2').style.display='none';document.getElementById('xlFile').value='';document.getElementById('xlDrop').classList.remove('drag');}
+
+function parseXlFile(file){
+  if(file.size>5*1024*1024){toast('⚠️ File terlalu besar (maks 5MB)');return;}
+  const reader=new FileReader();
+  reader.onload=function(e){
+    try{
+      const data=new Uint8Array(e.target.result);
+      const wb=XLSX.read(data,{type:'array'});
+      const ws=wb.Sheets[wb.SheetNames[0]];
+      const rows=XLSX.utils.sheet_to_json(ws,{defval:''});
+      if(!rows.length){toast('⚠️ Sheet kosong');return;}
+      xlParsed=rows.map(r=>{
+        function gc(keys){for(const k of Object.keys(r)){for(const key of keys){if(k.toLowerCase().replace(/\s+/g,'').includes(key))return String(r[k]).trim();}}return'';}
+        return{kode:gc(['kodemitra','kode']),nama:gc(['nama']),telp:gc(['notelp','telp','hp']),alamat:gc(['alamat']),eksp:gc(['ekspedisi','kurir']),brand:gc(['brand','merek']),};
+      }).filter(r=>r.kode||r.nama);
+      showXlPreview();
+    }catch(err){toast('❌ Gagal baca file: '+err.message);}
+  };
+  reader.readAsArrayBuffer(file);
+}
+
+function doImport(){
+  const mode=document.getElementById('xlDupMode').value;
+  let added=0,updated=0,skipped=0;
+  xlParsed.forEach(r=>{
+    if(!r.kode||!r.nama){skipped++;return;}
+    const brandKey=BRAND_MAP[r.brand.toLowerCase()]||'';
+    const existing=mitraDB.find(m=>m.kode===r.kode);
+    const data={id:existing?.id||Date.now().toString()+Math.random().toString(36).slice(2,6),kode:r.kode,nama:r.nama,telp:r.telp,alamat:r.alamat,eksp:r.eksp,brand:brandKey,tf:existing?.tf||''};
+    if(existing){if(mode==='update'){Object.assign(existing,data);updated++;}else{skipped++;}}
+    else{mitraDB.unshift(data);added++;}
+  });
+  saveMitraLS_bulk();updMitraCount();renderMitraDB();closeXlModal();
+  toast(`✅ Import: +${added} baru, ${updated} diperbarui, ${skipped} dilewati`);
+}
+
+function renderProduk(){
+  // Build brand tabs
+  const tabEl = document.getElementById('prodBrandTabs');
+  tabEl.innerHTML = Object.keys(BRANDS).map(k=>`
+    <div class="btab${prodBrandFilter===k?' active':''}" onclick="setProdBrand('${k}')">${BRANDS[k].label}</div>
+  `).join('');
+
+  // Build kategori tabs
+  const katEl = document.getElementById('prodKatTabs');
+  if(katEl){
+    katEl.innerHTML = `<div class="btab${prodKatFilter===''?' active':''}" onclick="setProdKat('')">Semua Kategori</div>`
+      + KATEGORI_LIST.map(k=>`<div class="btab${prodKatFilter===k?' active':''}" onclick="setProdKat('${k}')">${k}</div>`).join('');
+  }
+
+  let prods = BRANDS[prodBrandFilter]?.products || [];
+  if(prodKatFilter) prods = prods.filter(p=>(p.kategori||inferKategori(p))===prodKatFilter);
+  const tbody = document.getElementById('prodTableBody');
+  const empty = document.getElementById('prodEmpty');
+
+
+  if(!prods.length){ tbody.innerHTML=''; empty.style.display='block'; return; }
+  empty.style.display='none';
+
+  tbody.innerHTML = prods.map(p=>`
+    <tr>
+      <td><span style="font-family:'DM Mono',monospace;font-size:12px;color:var(--text3)">${p.code}</span></td>
+      <td><b>${p.name}</b></td>
+      <td><span class="alias-tag" style="background:var(--accent-l);border-color:#BFCFEF;">${p.kategori||inferKategori(p)}</span></td>
+      <td>${p.unit}</td>
+      <td>Rp${p.harga.toLocaleString('id')}</td>
+      <td>${(p.alias||[]).map(a=>`<span class="alias-tag">${a}</span>`).join('')}</td>
+      <td>
+        <div style="display:flex;gap:5px;">
+          <button class="btn btn-o btn-xs" onclick="openProdModal('${prodBrandFilter}','${p.code}')">✏️</button>
+          <button class="btn btn-rd btn-xs" onclick="delProd('${prodBrandFilter}','${p.code}')">🗑</button>
+        </div>
+      </td>
+    </tr>
+  `).join('');
+}
+
+function setProdBrand(b){ prodBrandFilter=b; renderProduk(); }
+
+function setProdKat(k){ prodKatFilter=k; renderProduk(); }
+
+function openProdModal(brandKey=null, code=null){
+  pendingAliases = [];
+  if(brandKey && code){
+    const p = BRANDS[brandKey]?.products.find(x=>x.code===code);
+    if(!p) return;
+    editProdKey = {brandKey, code};
+    document.getElementById('prodModalTitle').textContent = 'Edit Produk — ' + BRANDS[brandKey].label;
+    document.getElementById('pm_code').value  = p.code;
+    document.getElementById('pm_name').value  = p.name;
+    document.getElementById('pm_unit').value  = p.unit;
+    document.getElementById('pm_harga').value = p.harga;
+    document.getElementById('pm_berat').value = p.berat||0;
+    document.getElementById('pm_kategori').value = p.kategori||inferKategori(p);
+    pendingAliases = [...(p.alias||[])];
+  } else {
+    editProdKey = null;
+    document.getElementById('prodModalTitle').textContent = 'Tambah Produk';
+    document.getElementById('pm_code').value  = '';
+    document.getElementById('pm_name').value  = '';
+    document.getElementById('pm_unit').value  = 'kg';
+    document.getElementById('pm_harga').value = '';
+    document.getElementById('pm_berat').value = '';
+    document.getElementById('pm_kategori').value = 'bahan baku';
+    pendingAliases = [];
+  }
+  document.getElementById('pm_alias_input').value = '';
+  renderAliasTags();
+  document.getElementById('prodModal').style.display='flex';
+}
+
+function closeProdModal(){ document.getElementById('prodModal').style.display='none'; }
+
+function saveProdModal(){
+  const code  = document.getElementById('pm_code').value.trim().toUpperCase();
+  const name  = document.getElementById('pm_name').value.trim();
+  const unit  = document.getElementById('pm_unit').value;
+  const harga = parseInt(document.getElementById('pm_harga').value)||0;
+  const berat = parseInt(document.getElementById('pm_berat').value)||0;
+  const kategori = document.getElementById('pm_kategori').value;
+
+  // Flush any typed alias
+  const rawAlias = document.getElementById('pm_alias_input').value.trim().toLowerCase();
+  if(rawAlias && !pendingAliases.includes(rawAlias)) pendingAliases.push(rawAlias);
+
+  if(!code||!name||!harga){ toast('⚠️ Kode, Nama, dan Harga wajib diisi!'); return; }
+
+  // Determine target brand
+  let targetBrand = editProdKey ? editProdKey.brandKey : prodBrandFilter;
+
+  const prodData = { code, name, unit, harga, berat, kategori, alias: pendingAliases };
+
+  if(editProdKey){
+    const arr = BRANDS[editProdKey.brandKey].products;
+    const idx = arr.findIndex(x=>x.code===editProdKey.code);
+    if(idx>=0) arr[idx] = prodData;
+    else arr.push(prodData);
+  } else {
+    // Check duplicate code across this brand
+    const arr = BRANDS[targetBrand].products;
+    if(arr.find(x=>x.code===code)){ toast('⚠️ Kode produk sudah ada di brand ini!'); return; }
+    arr.push(prodData);
+  }
+
+  saveBrands();
+  closeProdModal();
+  renderProduk();
+  toast('✅ Produk tersimpan!');
+}
+
+function delProd(brandKey, code){
+  if(!confirm(`Hapus produk ${code} dari ${BRANDS[brandKey]?.label}?`)) return;
+  BRANDS[brandKey].products = BRANDS[brandKey].products.filter(p=>p.code!==code);
+  saveBrands();
+  renderProduk();
+  toast('🗑 Produk dihapus.');
+}
+
+function removeAlias(i){ pendingAliases.splice(i,1); renderAliasTags(); }
+
+function renderAliasTags(){
+  const el = document.getElementById('pm_alias_tags');
+  el.innerHTML = pendingAliases.map((a,i)=>`
+    <span style="display:inline-flex;align-items:center;gap:4px;background:var(--accent-l);border:1px solid #BFCFEF;border-radius:5px;padding:2px 7px;font-size:11px;">
+      ${a}
+      <span onclick="removeAlias(${i})" style="cursor:pointer;color:var(--red);font-weight:700;margin-left:2px;">✕</span>
+    </span>
+  `).join('');
+}
+
+function aliasKeydown(e){
+  if(e.key==='Enter'||e.key===','){
+    e.preventDefault();
+    const val = e.target.value.replace(/,/g,'').trim().toLowerCase();
+    if(val && !pendingAliases.includes(val)){ pendingAliases.push(val); }
+    e.target.value='';
+    renderAliasTags();
+  }
+}
+
+async function loadBrandsSync() {
+  const localBackup = loadBrandsLocal();
+  setSyncStatus('loading', 'Memuat produk...');
+  try {
+    const rows = await sbGet('shared_config', "key=eq.cs_ro_brands");
+    if (!rows.length || !rows[0].value) throw new Error('Belum ada data produk di cloud');
+    const result = rows[0].value;
+    // Validasi minimal: harus ada minimal 1 brand dengan produk
+    const hasProducts = Object.keys(result||{}).some(k => Array.isArray(result[k]?.products) && result[k].products.length>0);
+    if (!hasProducts) throw new Error('Data produk dari cloud kosong');
+    localStorage.setItem('brandsDB', JSON.stringify(result));
+    setSyncStatus('ok', 'Produk tersinkron');
+    return result;
+  } catch(e) {
+    setSyncStatus('error', 'Pakai data lokal');
+    return localBackup;
+  }
+}
+
+async function saveBrandsRemote(brandsObj) {
+  localStorage.setItem('brandsDB', JSON.stringify(brandsObj));
+  try {
+    await sbUpsert('shared_config', { key:'cs_ro_brands', value: brandsObj, updated_at: new Date().toISOString() });
+    setSyncStatus('ok', 'Produk tersinkron ✓');
+  } catch(e) { setSyncStatus('error','Gagal simpan produk ke cloud'); }
+}
+
+async function saveBrands() {
+  localStorage.setItem('brandsDB', JSON.stringify(BRANDS));
+  await saveBrandsRemote(BRANDS);
+}
+
+async function saveSingleProduk(brand, prod) {
+  localStorage.setItem('brandsDB', JSON.stringify(BRANDS));
+  await saveBrandsRemote(BRANDS);
+}
+
+async function deleteProdukRemote(brand, code) {
+  localStorage.setItem('brandsDB', JSON.stringify(BRANDS));
+  await saveBrandsRemote(BRANDS);
+}
+
+async function deleteProdukBulkRemote(brand, codes) {
+  localStorage.setItem('brandsDB', JSON.stringify(BRANDS));
+  await saveBrandsRemote(BRANDS);
+}
+
+function loadBrandsLocal() {
+  const saved = localStorage.getItem('brandsDB');
+  if (saved) { try { return JSON.parse(saved); } catch(e){} }
+  return JSON.parse(JSON.stringify(BRAND_DEFAULTS));
+}
+
+async function loadMitraSync() {
+  const localBackup = loadMitraLocal(); // simpan cache lokal dulu sebelum fetch
+
+  setSyncStatus('loading', 'Memuat mitra...');
+  try {
+    const rows = await sbGet('cs_ro_mitra', 'select=*&order=created_at.desc');
+
+    if (!Array.isArray(rows)) throw new Error('Format data tidak valid (bukan array)');
+
+    const fetched = rows.map(r=>({ id:r.id, kode:r.kode||'', nama:r.nama||'', telp:r.telp||'', alamat:r.alamat||'', eksp:r.eksp||'', brand:r.brand||'' }));
+
+    // PENTING: kalau Supabase return KOSONG tapi cache lokal punya data,
+    // jangan timpa — kemungkinan koneksi/query sedang bermasalah
+    if (fetched.length === 0 && localBackup.length > 0) {
+      mitraDB = localBackup;
+      setSyncStatus('error', 'Server kosong, pakai cache lokal ('+localBackup.length+' mitra)');
+      updMitraCount();
+      renderMitraDB();
+      return;
+    }
+
+    mitraDB = fetched;
+    localStorage.setItem('mitraDB', JSON.stringify(mitraDB));
+    setSyncStatus('ok', 'Mitra tersinkron ✓ ('+mitraDB.length+')');
+    updMitraCount();
+    renderMitraDB();
+  } catch(e) {
+    // Gagal sinkron — JANGAN hapus data, pakai cache lokal yang sudah ada
+    mitraDB = localBackup;
+    setSyncStatus('error', 'Gagal sinkron — pakai cache lokal ('+localBackup.length+')');
+    updMitraCount();
+    renderMitraDB();
+    console.error('loadMitraSync error:', e);
+  }
+}
+
+function loadMitraLocal() {
+  try { return JSON.parse(localStorage.getItem('mitraDB')||'[]'); } catch(e){ return []; }
+}
+
+async function saveMitraRemote(mitra) {
+  localStorage.setItem('mitraDB', JSON.stringify(mitraDB)); // cache dulu
+  try {
+    await sbUpsert('cs_ro_mitra', { id: mitra.id, kode: mitra.kode||'', nama: mitra.nama||'', telp: mitra.telp||'', alamat: mitra.alamat||'', eksp: mitra.eksp||'', brand: mitra.brand||'' });
+    setSyncStatus('ok', 'Mitra tersinkron ✓');
+  } catch(e) { setSyncStatus('error','Gagal simpan mitra ke cloud'); }
+}
+
+async function deleteMitraRemote(id) {
+  localStorage.setItem('mitraDB', JSON.stringify(mitraDB));
+  try { await sbDelete('cs_ro_mitra', id); } catch(e){}
+}
+
+function updMitraCount(){ document.getElementById('mitraCount').textContent=mitraDB.length; }
+
+// =========================================================
+// SUPABASE — koneksi database bersama
+// =========================================================
+const SB_URL = 'https://vaezkvntylwouhqbxukp.supabase.co';
+const SB_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZhZXprdm50eWx3b3VocWJ4dWtwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODE2NDczMjQsImV4cCI6MjA5NzIyMzMyNH0.M7XXn7WIsTdUepfq3kNbEEZiCreNnvXIZJAD0Q7P2WU';
+const SB_HDR = { 'Content-Type':'application/json', 'apikey':SB_KEY, 'Authorization':'Bearer '+SB_KEY, 'Prefer':'return=representation' };
+async function sbGet(t,p=''){const r=await fetch(`${SB_URL}/rest/v1/${t}?${p}`,{headers:SB_HDR});if(!r.ok)throw new Error(await r.text());return r.json();}
+async function sbPost(t,b){const r=await fetch(`${SB_URL}/rest/v1/${t}`,{method:'POST',headers:SB_HDR,body:JSON.stringify(b)});if(!r.ok)throw new Error(await r.text());return r.json();}
+async function sbUpsert(t,b){const r=await fetch(`${SB_URL}/rest/v1/${t}`,{method:'POST',headers:{...SB_HDR,'Prefer':'resolution=merge-duplicates,return=representation'},body:JSON.stringify(b)});if(!r.ok)throw new Error(await r.text());return r.json();}
+async function sbDelete(t,id){const r=await fetch(`${SB_URL}/rest/v1/${t}?id=eq.${id}`,{method:'DELETE',headers:SB_HDR});if(!r.ok)throw new Error(await r.text());}
+
+// =========================================================
+// STATE
+// =========================================================
+let BRANDS = loadBrands();
+let mitraDB = loadMitraLocal();
+let editMitraId = null;
+let editProdKey = null;
+let prodBrandFilter = 'ngemiloh';
+let prodKatFilter = '';
+let pendingAliases = [];
+let xlParsed = [];
+
+const XL_COLS=['Kode Mitra','Nama','No Telp','Alamat','Ekspedisi','Brand'];
+const BRAND_MAP={ngemiloh:'ngemiloh',melumer:'melumer',gokuah:'gokuah',yamie:'yamie','yamie curry':'yamie',bacigor:'bacigor','bacigor mamang':'bacigor'};
+
+// =========================================================
+// SYNC STATUS
+// =========================================================
+let sbSyncStatus = 'connecting';
+function setSyncStatus(status, msg=''){
+  const el = document.getElementById('syncStatus');
+  if(!el) return;
+  const map = {
+    connecting: {icon:'🟡', text: msg||'Menghubungkan...', color:'#C97B10'},
+    loading:    {icon:'⏳', text: msg||'Memuat...', color:'#C97B10'},
+    ok:         {icon:'🟢', text: msg||'Tersinkron', color:'#1A8A4A'},
+    error:      {icon:'🔴', text: msg||'Gagal sinkron', color:'#D94040'},
+    offline:    {icon:'⚪', text: 'Mode Offline', color:'#9E9C96'},
+  };
+  const s = map[status] || map.offline;
+  el.innerHTML = `<span style="color:${s.color}">${s.icon} ${s.text}</span>`;
+}
+
+function toast(msg){
+  const t=document.getElementById('toast');
+  t.textContent=msg; t.style.opacity='1';
+  clearTimeout(t._t); t._t=setTimeout(()=>t.style.opacity='0',2400);
+}
+
+// =========================================================
+// TABS
+// =========================================================
+function showTab(t){
+  ['mitra','produk'].forEach(x=>{
+    document.getElementById('panel-'+x)?.classList.toggle('active', x===t);
+    document.getElementById('tab-'+x)?.classList.toggle('active', x===t);
+  });
+  if(t==='mitra') renderMitraDB();
+  if(t==='produk') renderProduk();
+}
+
+
+// =========================================================
+// INIT
+// =========================================================
+async function init(){
+  renderMitraDB();
+  renderProduk();
+
+  setSyncStatus('loading', 'Menghubungkan ke database...');
+  try {
+    const ping = await sbGet('shared_config', 'key=eq.cs_ro_brands&limit=1');
+    setSyncStatus('connecting');
+  } catch(e) {
+    setSyncStatus('error', 'Tidak bisa terhubung — pakai data lokal');
+    return;
+  }
+
+  await loadMitraSync();
+  const remoteBrands = await loadBrandsSync();
+  if(remoteBrands){
+    BRANDS = remoteBrands;
+    renderProduk();
+  }
+  setSyncStatus('ok', 'Semua data tersinkron');
+
+  // Polling setiap 10 detik agar perubahan dari tools lain ikut muncul
+  setInterval(async ()=>{
+    try{
+      await loadMitraSync();
+      const rb = await loadBrandsSync();
+      if(rb){ BRANDS = rb; renderProduk(); }
+      setSyncStatus('ok', 'Tersinkron ✓');
+    }catch(e){
+      setSyncStatus('error','Gagal sinkron berkala');
+    }
+  }, 10000);
+}
+
+init();
+</script>
+</body>
+</html>
