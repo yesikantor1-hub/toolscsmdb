@@ -624,19 +624,36 @@ function parseXlFile(file){
   reader.readAsArrayBuffer(file);
 }
 
-function doImport(){
+async function doImport(){
   const mode=document.getElementById('xlDupMode').value;
   let added=0,updated=0,skipped=0;
+  const toSync=[];
   xlParsed.forEach(r=>{
     if(!r.kode||!r.nama){skipped++;return;}
-    const brandKey=BRAND_MAP[r.brand.toLowerCase()]||'';
+    const brandKey=BRAND_MAP[(r.brand||'').toLowerCase()]||'';
     const existing=mitraDB.find(m=>m.kode===r.kode);
     const data={id:existing?.id||Date.now().toString()+Math.random().toString(36).slice(2,6),kode:r.kode,nama:r.nama,telp:r.telp,alamat:r.alamat,eksp:r.eksp,brand:brandKey,tf:existing?.tf||''};
-    if(existing){if(mode==='update'){Object.assign(existing,data);updated++;}else{skipped++;}}
-    else{mitraDB.unshift(data);added++;}
+    if(existing){
+      if(mode==='update'){Object.assign(existing,data);updated++;toSync.push(data);}
+      else{skipped++;}
+    } else {
+      mitraDB.unshift(data);added++;toSync.push(data);
+    }
   });
-  saveMitraLS_bulk();updMitraCount();renderMitraDB();closeXlModal();
-  toast(`✅ Import: +${added} baru, ${updated} diperbarui, ${skipped} dilewati`);
+
+  // Simpan cache lokal dulu supaya UI langsung update
+  localStorage.setItem('mitraDB', JSON.stringify(mitraDB));
+  updMitraCount(); renderMitraDB(); closeXlModal();
+  toast(`✅ Import: +${added} baru, ${updated} diperbarui, ${skipped} dilewati — menyinkronkan ke server...`);
+
+  // Sinkronkan satu-satu ke Supabase (sequential agar tidak membanjiri koneksi)
+  let syncFailed=0;
+  for(const data of toSync){
+    try{ await saveMitraRemote(data); }
+    catch(e){ syncFailed++; console.error('Gagal sync mitra import:', data.kode, e.message); }
+  }
+  if(syncFailed>0) toast(`⚠️ ${syncFailed} mitra gagal disinkronkan ke server, tersimpan lokal saja.`);
+  else toast(`✅ Semua data berhasil disinkronkan ke server!`);
 }
 
 function renderProduk(){
