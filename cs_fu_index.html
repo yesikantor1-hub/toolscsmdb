@@ -1,0 +1,1116 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CS Tracker — FU & Deal</title>
+<style>
+:root {
+  --bg: #f7f7f5;
+  --surface: #ffffff;
+  --border: #e5e4e0;
+  --border-strong: #ccc9c3;
+  --text: #1a1a18;
+  --text-muted: #6b6b67;
+  --text-faint: #a0a09c;
+  --accent: #2563eb;
+  --accent-bg: #eff6ff;
+  --success: #16a34a;
+  --success-bg: #f0fdf4;
+  --warn: #d97706;
+  --warn-bg: #fffbeb;
+  --danger: #dc2626;
+  --danger-bg: #fef2f2;
+  --radius: 8px;
+  --radius-lg: 12px;
+  --shadow: 0 1px 3px rgba(0,0,0,0.08);
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: var(--bg); color: var(--text); font-size: 14px; line-height: 1.6; min-height: 100vh; }
+
+/* Layout */
+.app { display: grid; grid-template-rows: auto 1fr; min-height: 100vh; }
+.topbar { background: var(--surface); border-bottom: 1px solid var(--border); padding: 0 1.5rem; display: flex; align-items: center; gap: 1rem; height: 52px; position: sticky; top: 0; z-index: 50; }
+.topbar-brand { font-weight: 600; font-size: 15px; letter-spacing: -0.02em; }
+.topbar-brand span { color: var(--accent); }
+.nav { display: flex; gap: 2px; margin-left: auto; }
+.nav-btn { padding: 6px 12px; border-radius: var(--radius); border: none; background: none; cursor: pointer; font-size: 13px; color: var(--text-muted); transition: background 0.1s, color 0.1s; white-space: nowrap; }
+.nav-btn.active, .nav-btn:hover { background: var(--bg); color: var(--text); }
+.nav-btn.active { font-weight: 500; }
+.db-status { font-size: 11px; padding: 3px 8px; border-radius: 20px; border: 1px solid var(--border); color: var(--text-muted); white-space: nowrap; }
+.db-status.ok { border-color: #86efac; background: var(--success-bg); color: var(--success); }
+.db-status.err { border-color: #fca5a5; background: var(--danger-bg); color: var(--danger); }
+.content { padding: 1.5rem; max-width: 960px; margin: 0 auto; width: 100%; }
+.panel { display: none; } .panel.active { display: block; }
+
+/* Cards */
+.card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-lg); padding: 1.25rem; margin-bottom: 1rem; }
+.card-title { font-weight: 600; font-size: 14px; margin-bottom: 1rem; }
+
+/* Form */
+.form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.form-grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; }
+.form-group { display: flex; flex-direction: column; gap: 4px; }
+.form-group.full { grid-column: 1 / -1; }
+label { font-size: 12px; font-weight: 500; color: var(--text-muted); }
+input, select, textarea { padding: 8px 10px; border: 1px solid var(--border); border-radius: var(--radius); background: var(--surface); color: var(--text); font-size: 13px; width: 100%; transition: border-color 0.15s; font-family: inherit; }
+input:focus, select:focus, textarea:focus { outline: none; border-color: var(--accent); }
+input[readonly] { background: var(--bg); color: var(--text-muted); }
+textarea { resize: vertical; }
+.mitra-search-wrap { position: relative; }
+.mitra-dropdown { position: absolute; top: 100%; left: 0; right: 0; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); box-shadow: var(--shadow); z-index: 20; max-height: 240px; overflow-y: auto; display: none; }
+.mitra-dropdown.open { display: block; }
+.mitra-opt { padding: 9px 12px; cursor: pointer; font-size: 13px; border-bottom: 1px solid var(--border); }
+.mitra-opt:last-child { border-bottom: none; }
+.mitra-opt:hover { background: var(--bg); }
+.mitra-opt-name { font-weight: 500; }
+.mitra-opt-sub { font-size: 11px; color: var(--text-muted); }
+
+/* Deal toggle */
+.deal-toggle { display: flex; align-items: center; gap: 10px; padding: 12px 14px; border-radius: var(--radius); border: 1px solid var(--border); cursor: pointer; transition: all 0.15s; margin-top: 4px; background: var(--bg); }
+.deal-toggle.on { background: var(--success-bg); border-color: #86efac; }
+.deal-toggle input { width: auto; margin: 0; accent-color: var(--success); }
+.deal-toggle-label { font-size: 13px; font-weight: 500; }
+.deal-toggle-sub { font-size: 11px; color: var(--text-muted); }
+
+/* Buttons */
+.btn { padding: 8px 16px; border-radius: var(--radius); border: 1px solid var(--border); background: var(--surface); color: var(--text); cursor: pointer; font-size: 13px; font-weight: 500; transition: all 0.1s; white-space: nowrap; }
+.btn:hover { background: var(--bg); }
+.btn-primary { background: var(--accent); color: #fff; border-color: var(--accent); }
+.btn-primary:hover { opacity: 0.88; }
+.btn-sm { padding: 5px 10px; font-size: 12px; }
+.btn-danger { color: var(--danger); border-color: #fca5a5; }
+.btn-danger:hover { background: var(--danger-bg); }
+.btn-row { display: flex; gap: 8px; align-items: center; margin-top: 1rem; flex-wrap: wrap; }
+
+/* Copas box */
+.copas-result { background: var(--bg); border: 1px solid var(--border); border-radius: var(--radius); padding: 10px 12px; font-size: 12px; font-family: monospace; cursor: pointer; word-break: break-all; transition: border-color 0.15s; }
+.copas-result:hover { border-color: var(--accent); }
+.copas-hint { font-size: 11px; color: var(--text-faint); margin-top: 3px; }
+
+/* Badges */
+.badge { display: inline-flex; align-items: center; padding: 2px 8px; border-radius: 20px; font-size: 11px; font-weight: 500; }
+.badge-deal { background: var(--success-bg); color: var(--success); border: 1px solid #86efac; }
+.badge-fu { background: var(--accent-bg); color: var(--accent); border: 1px solid #93c5fd; }
+.badge-disc { background: var(--warn-bg); color: var(--warn); border: 1px solid #fcd34d; }
+.badge-brand { background: var(--bg); color: var(--text-muted); border: 1px solid var(--border); }
+
+/* Metrics */
+.metrics { display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 10px; margin-bottom: 1.25rem; }
+.metric { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-lg); padding: 14px 16px; }
+.metric-num { font-size: 26px; font-weight: 700; letter-spacing: -0.02em; line-height: 1; }
+.metric-lbl { font-size: 11px; color: var(--text-muted); margin-top: 4px; }
+.metric.accent .metric-num { color: var(--accent); }
+.metric.green .metric-num { color: var(--success); }
+.metric.warn .metric-num { color: var(--warn); }
+
+/* Table */
+.tbl-wrap { overflow-x: auto; border-radius: var(--radius); border: 1px solid var(--border); }
+table { width: 100%; border-collapse: collapse; font-size: 12px; }
+th { text-align: left; padding: 8px 10px; border-bottom: 1px solid var(--border); background: var(--bg); color: var(--text-muted); font-weight: 600; font-size: 11px; text-transform: uppercase; letter-spacing: 0.04em; white-space: nowrap; }
+td { padding: 8px 10px; border-bottom: 1px solid var(--border); vertical-align: middle; }
+tr:last-child td { border-bottom: none; }
+tr:hover td { background: var(--bg); }
+.copy-btn { background: none; border: 1px solid var(--border); border-radius: 4px; padding: 2px 8px; cursor: pointer; font-size: 11px; color: var(--text-muted); }
+.copy-btn:hover { border-color: var(--accent); color: var(--accent); }
+
+/* Tags */
+.tag-list { display: flex; flex-wrap: wrap; gap: 6px; }
+.tag { background: var(--bg); border: 1px solid var(--border); border-radius: var(--radius); padding: 4px 10px; font-size: 12px; display: flex; align-items: center; gap: 6px; }
+.tag-del { background: none; border: none; cursor: pointer; color: var(--danger); font-size: 14px; line-height: 1; padding: 0; }
+
+/* Filter bar */
+.filter-bar { display: flex; gap: 8px; flex-wrap: wrap; align-items: flex-end; margin-bottom: 1rem; }
+.filter-bar input, .filter-bar select { width: auto; min-width: 110px; }
+
+/* Empty state */
+.empty { text-align: center; padding: 3rem 1rem; color: var(--text-muted); }
+.empty-icon { font-size: 32px; margin-bottom: 8px; }
+.empty-text { font-size: 13px; }
+
+/* Notice */
+.notice { padding: 10px 14px; border-radius: var(--radius); font-size: 13px; margin-bottom: 1rem; }
+.notice-success { background: var(--success-bg); color: var(--success); border: 1px solid #86efac; }
+.notice-warn { background: var(--warn-bg); color: var(--warn); border: 1px solid #fcd34d; }
+.notice-info { background: var(--accent-bg); color: var(--accent); border: 1px solid #93c5fd; }
+
+/* Section headers */
+.section-label { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.06em; color: var(--text-faint); margin-bottom: 8px; margin-top: 1.25rem; }
+
+/* Report brand card */
+.rpt-brand { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-lg); padding: 1rem 1.25rem; margin-bottom: 10px; }
+.rpt-brand-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
+.rpt-brand-name { font-weight: 600; font-size: 14px; }
+.rpt-stats { display: flex; gap: 6px; flex-wrap: wrap; }
+
+/* Setup modal */
+.modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.4); z-index: 100; display: flex; align-items: center; justify-content: center; padding: 1rem; }
+.modal { background: var(--surface); border-radius: var(--radius-lg); padding: 1.5rem; width: 100%; max-width: 520px; max-height: 90vh; overflow-y: auto; border: 1px solid var(--border); }
+.modal h2 { font-size: 16px; font-weight: 600; margin-bottom: 6px; }
+.modal p { font-size: 13px; color: var(--text-muted); margin-bottom: 1rem; line-height: 1.6; }
+.step { display: flex; gap: 12px; margin-bottom: 14px; padding-bottom: 14px; border-bottom: 1px solid var(--border); }
+.step:last-of-type { border-bottom: none; }
+.step-num { width: 24px; height: 24px; border-radius: 50%; background: var(--accent); color: #fff; font-size: 12px; font-weight: 700; display: flex; align-items: center; justify-content: center; flex-shrink: 0; margin-top: 1px; }
+.step-body { flex: 1; }
+.step-title { font-weight: 600; font-size: 13px; margin-bottom: 4px; }
+.step-desc { font-size: 12px; color: var(--text-muted); line-height: 1.6; }
+.step-desc code { background: var(--bg); border: 1px solid var(--border); border-radius: 4px; padding: 1px 5px; font-size: 11px; font-family: monospace; }
+.config-input-row { display: flex; gap: 8px; margin-top: 8px; }
+.config-input-row input { flex: 1; font-family: monospace; font-size: 12px; }
+
+/* Spinner */
+.spinner { display: inline-block; width: 14px; height: 14px; border: 2px solid var(--border); border-top-color: var(--accent); border-radius: 50%; animation: spin 0.7s linear infinite; vertical-align: middle; }
+@keyframes spin { to { transform: rotate(360deg); } }
+
+@media (max-width: 640px) {
+  .form-grid, .form-grid-3 { grid-template-columns: 1fr; }
+  .content { padding: 1rem; }
+  .topbar { padding: 0 1rem; }
+  .nav-btn span { display: none; }
+}
+</style>
+</head>
+<body>
+<div class="app">
+  <div class="topbar">
+    <div class="topbar-brand">CS <span>Tracker</span></div>
+    <nav class="nav">
+      <button class="nav-btn active" onclick="showPanel('input')">✏️ <span>Input FU</span></button>
+      <button class="nav-btn" onclick="showPanel('data')">📋 <span>Data</span></button>
+      <button class="nav-btn" onclick="showPanel('report')">📊 <span>Report</span></button>
+      <button class="nav-btn" onclick="showPanel('mitra-admin')">👥 <span>Mitra</span></button>
+      <button class="nav-btn" onclick="showPanel('settings')">⚙️ <span>Setelan</span></button>
+    </nav>
+    <div class="db-status" id="db-status">⏳ Menghubungkan...</div>
+  </div>
+
+  <div class="content">
+
+    <!-- INPUT FU -->
+    <div class="panel active" id="panel-input">
+      <div class="card">
+        <div class="card-title">Input Follow Up Harian</div>
+        <div class="form-grid">
+          <div class="form-group">
+            <label>Tanggal</label>
+            <input type="date" id="inp-tanggal">
+          </div>
+          <div class="form-group">
+            <label>Brand</label>
+            <select id="inp-brand" onchange="onBrandChange()"></select>
+          </div>
+        </div>
+
+        <div class="form-group" style="margin-top:10px">
+          <label>Cari / Pilih Mitra</label>
+          <div class="mitra-search-wrap">
+            <input type="text" id="inp-mitra-search" placeholder="Ketik nama mitra..." autocomplete="off"
+              oninput="filterMitra(this.value)" onfocus="filterMitra(this.value)" onblur="setTimeout(()=>closeMitraDD(),200)">
+            <div class="mitra-dropdown" id="mitra-dropdown"></div>
+          </div>
+        </div>
+
+        <div id="mitra-deal-info" style="display:none; margin-top:10px"></div>
+
+        <div class="form-grid" style="margin-top:10px">
+          <div class="form-group">
+            <label>Nama Lengkap</label>
+            <input type="text" id="inp-nama" placeholder="Otomatis terisi dari pilihan mitra">
+          </div>
+          <div class="form-group">
+            <label>Kota / Alamat</label>
+            <input type="text" id="inp-alamat" placeholder="Otomatis terisi">
+          </div>
+          <div class="form-group">
+            <label>No HP</label>
+            <input type="text" id="inp-hp" placeholder="Otomatis terisi">
+          </div>
+          <div class="form-group">
+            <label>CS / PIC yang FU</label>
+            <input type="text" id="inp-cs" placeholder="Nama kamu">
+            <div id="csLockNote" style="display:none;font-size:11px;color:var(--text-muted);margin-top:3px;">🔒 Otomatis terisi dari akun login kamu</div>
+          </div>
+        </div>
+
+        <div class="form-grid" style="margin-top:10px">
+          <div class="form-group">
+            <label>Kategori FU</label>
+            <select id="inp-kategori"><option value="">— Pilih —</option></select>
+          </div>
+          <div class="form-group">
+            <label>Catatan / Hasil FU</label>
+            <input type="text" id="inp-catatan" placeholder="Ringkas hasil FU">
+          </div>
+        </div>
+
+        <div style="margin-top:12px">
+          <div class="deal-toggle" id="deal-toggle" onclick="toggleDeal()">
+            <input type="checkbox" id="chk-deal" onclick="event.stopPropagation()">
+            <div>
+              <div class="deal-toggle-label">✅ Tandai sebagai Deal (Closing)</div>
+              <div class="deal-toggle-sub">Aktifkan jika mitra berhasil order</div>
+            </div>
+          </div>
+        </div>
+
+        <div id="deal-fields" style="display:none; margin-top:10px">
+          <div class="form-grid">
+            <div class="form-group">
+              <label>Diskon</label>
+              <select id="inp-disc"><option value="">— Pilih diskon —</option></select>
+            </div>
+            <div class="form-group">
+              <label>Qty / Keterangan (opsional)</label>
+              <input type="text" id="inp-qty" placeholder="misal: 2 box">
+            </div>
+          </div>
+        </div>
+
+        <div class="btn-row">
+          <button class="btn btn-primary" onclick="saveEntry()">💾 Simpan</button>
+          <button class="btn" onclick="resetForm()">Reset</button>
+        </div>
+
+        <div id="save-notice" style="display:none; margin-top:10px"></div>
+
+        <div id="copas-area" style="display:none; margin-top:12px">
+          <div class="section-label">Format Copas</div>
+          <div class="copas-result" id="copas-text" onclick="copyText(this)" title="Klik untuk copy"></div>
+          <div class="copas-hint">🖱️ Klik untuk copy ke clipboard</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- DATA -->
+    <div class="panel" id="panel-data">
+      <div class="filter-bar">
+        <div>
+          <label style="display:block;margin-bottom:3px">Brand</label>
+          <select id="f-brand" onchange="renderData()">
+            <option value="">Semua brand</option>
+          </select>
+        </div>
+        <div>
+          <label style="display:block;margin-bottom:3px">CS</label>
+          <select id="f-cs" onchange="renderData()">
+            <option value="">👥 Semua CS</option>
+          </select>
+        </div>
+        <div>
+          <label style="display:block;margin-bottom:3px">Status</label>
+          <select id="f-type" onchange="renderData()">
+            <option value="">Semua</option>
+            <option value="fu">FU only</option>
+            <option value="deal">Deal only</option>
+          </select>
+        </div>
+        <div>
+          <label style="display:block;margin-bottom:3px">Dari</label>
+          <input type="date" id="f-from" onchange="renderData()">
+        </div>
+        <div>
+          <label style="display:block;margin-bottom:3px">Sampai</label>
+          <input type="date" id="f-to" onchange="renderData()">
+        </div>
+        <button class="btn btn-sm" onclick="exportCSV()">⬇️ Export CSV</button>
+      </div>
+      <div id="data-notice" style="display:none;margin-bottom:10px"></div>
+      <div id="data-container"></div>
+    </div>
+
+    <!-- REPORT -->
+    <div class="panel" id="panel-report">
+      <div class="filter-bar" style="margin-bottom:1.25rem">
+        <div>
+          <label style="display:block;margin-bottom:3px">Dari</label>
+          <input type="date" id="r-from" onchange="renderReport()">
+        </div>
+        <div>
+          <label style="display:block;margin-bottom:3px">Sampai</label>
+          <input type="date" id="r-to" onchange="renderReport()">
+        </div>
+        <div style="align-self:flex-end;display:flex;gap:6px">
+          <button class="btn btn-sm" onclick="setRange('today')">Hari ini</button>
+          <button class="btn btn-sm" onclick="setRange('week')">Minggu ini</button>
+          <button class="btn btn-sm" onclick="setRange('month')">Bulan ini</button>
+        </div>
+      </div>
+      <div id="report-container"></div>
+    </div>
+
+    <!-- MITRA ADMIN -->
+    <div class="panel" id="panel-mitra-admin">
+      <div class="card">
+        <div class="card-title">Import / Tambah Data Mitra</div>
+        <div class="notice notice-info">💡 Upload CSV dengan kolom: <strong>nama, alamat, hp, brand</strong> — atau tambah satu per satu di bawah</div>
+        <div style="margin-bottom:1rem">
+          <label>Upload CSV Mitra (bulk)</label>
+          <input type="file" id="csv-upload" accept=".csv" onchange="importCSV(this)" style="margin-top:4px">
+        </div>
+        <div style="border-top:1px solid var(--border);padding-top:1rem">
+          <div class="section-label">Tambah Manual</div>
+          <div class="form-grid">
+            <div class="form-group">
+              <label>Nama Mitra</label>
+              <input type="text" id="m-nama" placeholder="Nama lengkap">
+            </div>
+            <div class="form-group">
+              <label>Kota / Alamat</label>
+              <input type="text" id="m-alamat" placeholder="Kota">
+            </div>
+            <div class="form-group">
+              <label>No HP</label>
+              <input type="text" id="m-hp" placeholder="+62 xxx">
+            </div>
+            <div class="form-group">
+              <label>Brand</label>
+              <select id="m-brand"></select>
+            </div>
+          </div>
+          <div class="btn-row">
+            <button class="btn btn-primary" onclick="addMitra()">Tambah Mitra</button>
+          </div>
+          <div id="mitra-notice" style="display:none;margin-top:8px"></div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-title">Daftar Mitra</div>
+        <div class="filter-bar" style="margin-bottom:1rem">
+          <input type="text" id="search-mitra" placeholder="Cari nama mitra..." oninput="renderMitraList()" style="min-width:200px">
+          <select id="filter-mitra-brand" onchange="renderMitraList()" style="width:auto">
+            <option value="">Semua brand</option>
+          </select>
+        </div>
+        <div id="mitra-list-container"></div>
+      </div>
+    </div>
+
+    <!-- SETTINGS -->
+    <div class="panel" id="panel-settings">
+      <div class="card">
+        <div class="card-title">Status Database</div>
+        <div class="notice notice-info">✅ Terhubung ke Supabase — data otomatis tersinkron ke semua CS &amp; Admin secara online. Tidak perlu konfigurasi manual.</div>
+      </div>
+
+      <div class="card">
+        <div class="card-title">Brand</div>
+        <div style="display:flex;gap:8px;margin-bottom:10px">
+          <input type="text" id="new-brand" placeholder="Nama brand baru" style="flex:1">
+          <button class="btn btn-primary btn-sm" onclick="addBrand()">Tambah</button>
+        </div>
+        <div id="brand-tags" class="tag-list"></div>
+      </div>
+
+      <div class="card">
+        <div class="card-title">Kategori FU</div>
+        <div style="display:flex;gap:8px;margin-bottom:10px">
+          <input type="text" id="new-kat" placeholder="Nama kategori" style="flex:1">
+          <button class="btn btn-primary btn-sm" onclick="addKat()">Tambah</button>
+        </div>
+        <div id="kat-tags" class="tag-list"></div>
+      </div>
+
+      <div class="card">
+        <div class="card-title">Diskon per Brand</div>
+        <div style="display:flex;gap:8px;margin-bottom:10px;flex-wrap:wrap">
+          <select id="disc-brand-sel" style="width:auto;min-width:130px" onchange="renderDiscTags()"></select>
+          <input type="text" id="new-disc" placeholder="misal: Disc BB 10%" style="flex:1;min-width:120px">
+          <button class="btn btn-primary btn-sm" onclick="addDisc()">Tambah</button>
+        </div>
+        <div id="disc-tags" class="tag-list"></div>
+      </div>
+    </div>
+
+  </div><!-- .content -->
+</div><!-- .app -->
+
+<script type="module">
+// ─── State ────────────────────────────────────────────────────────────────────
+let state = JSON.parse(localStorage.getItem('cs_state') || 'null') || {
+  brands: ['Ngemiloh', 'Melumer', 'Gokuah'],
+  kategori: ['Penurunan', 'Peningkatan', 'Vakum 1 (60-89)', 'Vakum 2 (90-119)', 'Vakum 3 (120-179)', 'Churn (>180)'],
+  discs: { Ngemiloh: ['Disc BB 10%', 'Disc BB 15%'], Melumer: ['Disc BB 10%', 'Disc BB 15%'], Gokuah: ['Disc BB 8%', 'Disc BB 10%'] },
+  entries: [],
+  mitras: []
+};
+
+function saveLocal() { localStorage.setItem('cs_state', JSON.stringify(state)); }
+
+// ─── SUPABASE — pengganti Firebase, semua tools pakai database yang sama ──────
+const SB_URL = 'https://vaezkvntylwouhqbxukp.supabase.co';
+const SB_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZhZXprdm50eWx3b3VocWJ4dWtwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODE2NDczMjQsImV4cCI6MjA5NzIyMzMyNH0.M7XXn7WIsTdUepfq3kNbEEZiCreNnvXIZJAD0Q7P2WU';
+const SB_HDR = { 'Content-Type':'application/json', 'apikey':SB_KEY, 'Authorization':'Bearer '+SB_KEY, 'Prefer':'return=representation' };
+async function sbGet(t,p=''){const r=await fetch(`${SB_URL}/rest/v1/${t}?${p}`,{headers:SB_HDR});if(!r.ok)throw new Error(await r.text());return r.json();}
+async function sbPost(t,b){const r=await fetch(`${SB_URL}/rest/v1/${t}`,{method:'POST',headers:SB_HDR,body:JSON.stringify(b)});if(!r.ok)throw new Error(await r.text());return r.json();}
+async function sbUpsert(t,b){const r=await fetch(`${SB_URL}/rest/v1/${t}`,{method:'POST',headers:{...SB_HDR,'Prefer':'resolution=merge-duplicates,return=representation'},body:JSON.stringify(b)});if(!r.ok)throw new Error(await r.text());return r.json();}
+async function sbPatch(t,id,b){const r=await fetch(`${SB_URL}/rest/v1/${t}?id=eq.${id}`,{method:'PATCH',headers:SB_HDR,body:JSON.stringify(b)});if(!r.ok)throw new Error(await r.text());return r.json();}
+async function sbDelete(t,id){const r=await fetch(`${SB_URL}/rest/v1/${t}?id=eq.${id}`,{method:'DELETE',headers:SB_HDR});if(!r.ok)throw new Error(await r.text());}
+
+function entryToRow(e){
+  return { id: e._key||String(e.ts), tanggal:e.tanggal, brand:e.brand, nama:e.nama, alamat:e.alamat||'',
+    hp:e.hp||'', cs:e.cs||'', kategori:e.kategori||'', catatan:e.catatan||'', is_deal:!!e.isDeal,
+    disc:e.disc||'', qty:e.qty||'', copas:e.copas||'', ts:e.ts };
+}
+function rowToEntry(r){
+  return { _key:r.id, tanggal:r.tanggal, brand:r.brand, nama:r.nama, alamat:r.alamat, hp:r.hp,
+    cs:r.cs, kategori:r.kategori, catatan:r.catatan, isDeal:r.is_deal, disc:r.disc, qty:r.qty,
+    copas:r.copas, ts:r.ts };
+}
+function mitraToRow(m){
+  return { id: m._key||String(m.ts||Date.now()), nama:m.nama||'', alamat:m.alamat||'', hp:m.hp||'', brand:m.brand||'', ts:m.ts||Date.now() };
+}
+function rowToMitra(r){
+  return { _key:r.id, nama:r.nama, alamat:r.alamat, hp:r.hp, brand:r.brand, ts:r.ts };
+}
+
+let dbConnected = false;
+function setStatus(type, text) {
+  const el = document.getElementById('db-status');
+  el.textContent = text;
+  el.className = 'db-status ' + (type === 'ok' ? 'ok' : type === 'err' ? 'err' : '');
+}
+
+async function syncFromSupabase(silent) {
+  try {
+    const [entryRows, mitraRows, cfgRows] = await Promise.all([
+      sbGet('cs_fu_entries', 'select=*&order=ts.desc'),
+      sbGet('cs_fu_mitra', 'select=*&order=ts.desc'),
+      sbGet('shared_config', "key=in.(cs_fu_brands,cs_fu_kategori,cs_fu_discs)"),
+    ]);
+    const newEntries = entryRows.map(rowToEntry);
+    const newMitras  = mitraRows.map(rowToMitra);
+    let newBrands = state.brands;
+    let newKategori = state.kategori;
+    let newDiscs = state.discs;
+    cfgRows.forEach(row => {
+      if (row.key === 'cs_fu_brands' && row.value) newBrands = row.value;
+      if (row.key === 'cs_fu_kategori' && row.value) newKategori = row.value;
+      if (row.key === 'cs_fu_discs' && row.value) newDiscs = row.value;
+    });
+
+    // Bandingkan sebelum-sesudah supaya tidak re-render kalau memang tidak ada perubahan
+    const changed = JSON.stringify(newEntries)!==JSON.stringify(state.entries)
+      || JSON.stringify(newMitras)!==JSON.stringify(state.mitras)
+      || JSON.stringify(newBrands)!==JSON.stringify(state.brands)
+      || JSON.stringify(newKategori)!==JSON.stringify(state.kategori)
+      || JSON.stringify(newDiscs)!==JSON.stringify(state.discs);
+
+    state.entries = newEntries;
+    state.mitras  = newMitras;
+    state.brands  = newBrands;
+    state.kategori = newKategori;
+    state.discs = newDiscs;
+    saveLocal();
+    dbConnected = true;
+    setStatus('ok', '🟢 Terhubung (Supabase)');
+    if (changed || !silent) refreshUI();
+  } catch (e) {
+    dbConnected = false;
+    setStatus('err', '🔴 Offline — data lokal');
+    if (!silent) console.warn('Gagal sync Supabase:', e.message);
+  }
+}
+
+// Polling tiap 20 detik biar entry dari CS lain ikut muncul, tanpa ganggu saat user lagi mengisi form
+let _isTyping = false;
+let _pollTimer = setInterval(() => { if (!_isTyping) syncFromSupabase(true); }, 20000);
+document.addEventListener('focusin', (e) => { if (e.target.matches('input,textarea,select')) _isTyping = true; });
+document.addEventListener('focusout', () => { setTimeout(()=>{ _isTyping = false; }, 500); });
+
+function pushEntry(entry) {
+  state.entries.unshift(entry);
+  saveLocal(); refreshUI();
+  sbPost('cs_fu_entries', entryToRow(entry)).then(()=>{dbConnected=true;setStatus('ok','🟢 Terhubung (Supabase)');}).catch(e=>{dbConnected=false;setStatus('err','🔴 Gagal sync — tersimpan lokal');console.warn(e.message);});
+}
+
+function pushMitra(mitra) {
+  state.mitras.push(mitra);
+  saveLocal(); renderMitraList();
+  sbPost('cs_fu_mitra', mitraToRow(mitra)).catch(e=>console.warn('Gagal sync mitra:', e.message));
+}
+
+function saveConfig(key, val) {
+  saveLocal();
+  const keyMap = { brands:'cs_fu_brands', kategori:'cs_fu_kategori', discs:'cs_fu_discs' };
+  const sbKey = keyMap[key] || key;
+  sbUpsert('shared_config', { key: sbKey, value: val, updated_at: new Date().toISOString() })
+    .catch(e=>console.warn('Gagal sync config:', e.message));
+}
+
+function deleteMitra(key) {
+  state.mitras = state.mitras.filter(m => m._key !== key);
+  saveLocal(); renderMitraList();
+  sbDelete('cs_fu_mitra', key).catch(e=>console.warn('Gagal hapus mitra:', e.message));
+}
+
+function updateEntry(key, changes) {
+  const idx = state.entries.findIndex(e => (e._key || String(e.ts)) === key);
+  if (idx !== -1) Object.assign(state.entries[idx], changes);
+  saveLocal(); renderData();
+  const patch = {};
+  if ('isDeal' in changes) patch.is_deal = changes.isDeal;
+  if ('disc' in changes) patch.disc = changes.disc;
+  if ('catatan' in changes) patch.catatan = changes.catatan;
+  if ('kategori' in changes) patch.kategori = changes.kategori;
+  if (Object.keys(patch).length) sbPatch('cs_fu_entries', key, patch).catch(e=>console.warn('Gagal update entry:', e.message));
+}
+
+// ─── IDENTITAS CS — diterima dari parent (sistem OpsTools) ────────────────────
+let CURRENT_CS = { nama: null, role: null, isOwnerLike: false };
+
+function applyCsIdentity(info) {
+  CURRENT_CS.nama = info?.nama || null;
+  CURRENT_CS.role = info?.role || null;
+  CURRENT_CS.isOwnerLike = (info?.role === 'owner' || info?.role === 'manager' || info?.role === 'admin');
+  const csInput = document.getElementById('inp-cs');
+  const lockNote = document.getElementById('csLockNote');
+  if (CURRENT_CS.nama && csInput) {
+    csInput.value = CURRENT_CS.nama;
+    csInput.readOnly = true;
+    csInput.style.background = 'var(--bg)';
+    csInput.style.cursor = 'not-allowed';
+    if (lockNote) lockNote.style.display = 'block';
+  }
+  populateCsFilterOption();
+}
+
+window.addEventListener('message', (ev) => {
+  if (ev.data && ev.data.type === 'OPSTOOLS_IDENTITY') applyCsIdentity(ev.data.payload);
+});
+if (window.parent !== window) {
+  window.parent.postMessage({ type: 'OPSTOOLS_REQUEST_IDENTITY' }, '*');
+}
+
+function canEditEntry(e) {
+  if (CURRENT_CS.isOwnerLike) return true;
+  if (!CURRENT_CS.nama) return true; // mode standalone, bebas
+  return e.cs === CURRENT_CS.nama;
+}
+
+function populateCsFilterOption() {
+  const sel = document.getElementById('f-cs');
+  if (!sel) return;
+  const cur = sel.value;
+  const names = [...new Set(state.entries.map(e => e.cs).filter(Boolean))].sort();
+  sel.innerHTML = '<option value="">👥 Semua CS</option>' + names.map(n => `<option value="${n}">${n}</option>`).join('');
+  if (names.includes(cur)) sel.value = cur;
+}
+
+// ─── Init ─────────────────────────────────────────────────────────────────────
+setStatus('', '🟡 Menghubungkan...');
+syncFromSupabase();
+
+
+// ─── Setup modal tidak diperlukan lagi — Supabase otomatis terhubung ─────────
+window.closeSetupModal = () => { const m=document.getElementById('setup-modal'); if(m) m.style.display = 'none'; };
+
+function fmt(d) { return d.toISOString().split('T')[0]; }
+window.setRange = (mode) => {
+  const today = new Date();
+  let from;
+  const to = fmt(today);
+  if (mode === 'today') from = to;
+  else if (mode === 'week') { const d = new Date(today); d.setDate(d.getDate() - d.getDay() + 1); from = fmt(d); }
+  else { from = fmt(new Date(today.getFullYear(), today.getMonth(), 1)); }
+  document.getElementById('r-from').value = from;
+  document.getElementById('r-to').value = to;
+  renderReport();
+};
+
+function refreshUI() {
+  const active = document.querySelector('.panel.active')?.id;
+  populateBrandDropdowns();
+  populateKategoriDropdown();
+  populateCsFilterOption();
+  if (active === 'panel-data') renderData();
+  if (active === 'panel-report') renderReport();
+  if (active === 'panel-mitra-admin') renderMitraList();
+  if (active === 'panel-settings') renderSettings();
+}
+
+// ─── Nav ──────────────────────────────────────────────────────────────────────
+window.showPanel = (name) => {
+  document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('panel-' + name).classList.add('active');
+  document.querySelectorAll('.nav-btn')[['input','data','report','mitra-admin','settings'].indexOf(name)].classList.add('active');
+  if (name === 'data') renderData();
+  if (name === 'report') renderReport();
+  if (name === 'mitra-admin') renderMitraList();
+  if (name === 'settings') renderSettings();
+};
+
+// ─── Dropdowns ────────────────────────────────────────────────────────────────
+function populateBrandDropdowns() {
+  const ids = ['inp-brand', 'f-brand', 'disc-brand-sel', 'm-brand', 'filter-mitra-brand'];
+  ids.forEach(id => {
+    const el = document.getElementById(id);
+    if (!el) return;
+    const cur = el.value;
+    const isFilter = ['f-brand', 'filter-mitra-brand'].includes(id);
+    el.innerHTML = isFilter ? '<option value="">Semua brand</option>' : '';
+    state.brands.forEach(b => {
+      const o = document.createElement('option');
+      o.value = b; o.textContent = b; el.appendChild(o);
+    });
+    if (cur && state.brands.includes(cur)) el.value = cur;
+  });
+}
+
+function populateKategoriDropdown() {
+  const el = document.getElementById('inp-kategori');
+  if (!el) return;
+  const cur = el.value;
+  el.innerHTML = '<option value="">— Pilih —</option>';
+  state.kategori.forEach(k => {
+    const o = document.createElement('option');
+    o.value = k; o.textContent = k; el.appendChild(o);
+  });
+  if (cur) el.value = cur;
+}
+
+window.onBrandChange = () => {
+  const brand = document.getElementById('inp-brand').value;
+  const el = document.getElementById('inp-disc');
+  el.innerHTML = '<option value="">— Pilih diskon —</option>';
+  (state.discs[brand] || []).forEach(d => {
+    const o = document.createElement('option');
+    o.value = d; o.textContent = d; el.appendChild(o);
+  });
+};
+
+// ─── Mitra search ─────────────────────────────────────────────────────────────
+function getMitraLastDeal(nama) {
+  return state.entries
+    .filter(e => e.nama === nama && e.isDeal)
+    .sort((a, b) => b.ts - a.ts)[0] || null;
+}
+
+window.filterMitra = (q) => {
+  const brand = document.getElementById('inp-brand').value;
+  const dd = document.getElementById('mitra-dropdown');
+  const matches = state.mitras.filter(m =>
+    (!brand || m.brand === brand) &&
+    (m.nama?.toLowerCase().includes(q.toLowerCase()) || m.hp?.includes(q))
+  ).slice(0, 12);
+
+  if (!q && !matches.length) { dd.classList.remove('open'); return; }
+  dd.innerHTML = matches.length ? matches.map(m => {
+    const lastDeal = getMitraLastDeal(m.nama);
+    const dealBadge = lastDeal
+      ? `<span style="font-size:10px;background:#f0fdf4;color:#16a34a;border:1px solid #86efac;border-radius:4px;padding:1px 6px;margin-left:6px">⚡ Pernah Deal${lastDeal.disc ? ' · ' + lastDeal.disc : ''}</span>`
+      : '';
+    return `<div class="mitra-opt" onmousedown="selectMitra('${(m._key||m.nama).replace(/'/g,"\\'")}')">
+      <div class="mitra-opt-name">${m.nama}${dealBadge}</div>
+      <div class="mitra-opt-sub">${m.alamat || ''} · ${m.hp || ''}</div>
+    </div>`;
+  }).join('') : '<div class="mitra-opt" style="color:var(--text-muted)">Tidak ditemukan</div>';
+  dd.classList.add('open');
+};
+
+window.selectMitra = (key) => {
+  const m = state.mitras.find(x => (x._key || x.nama) === key);
+  if (!m) return;
+  document.getElementById('inp-mitra-search').value = m.nama;
+  document.getElementById('inp-nama').value = m.nama || '';
+  document.getElementById('inp-alamat').value = m.alamat || '';
+  document.getElementById('inp-hp').value = m.hp || '';
+  if (m.brand) { document.getElementById('inp-brand').value = m.brand; onBrandChange(); }
+
+  const lastDeal = getMitraLastDeal(m.nama);
+  const infoBox = document.getElementById('mitra-deal-info');
+  if (lastDeal) {
+    infoBox.innerHTML = `<div style="display:flex;align-items:center;gap:10px;padding:10px 14px;background:#f0fdf4;border:1px solid #86efac;border-radius:8px;font-size:13px">
+      <span style="font-size:18px">⚡</span>
+      <div>
+        <div style="font-weight:600;color:#16a34a">Mitra ini pernah Deal!</div>
+        <div style="font-size:12px;color:#4b7a5e">Deal terakhir: <strong>${lastDeal.tanggal}</strong>${lastDeal.disc ? ' &nbsp;·&nbsp; Diskon: <strong>' + lastDeal.disc + '</strong>' : ''}${lastDeal.catatan ? ' &nbsp;·&nbsp; ' + lastDeal.catatan : ''}</div>
+      </div>
+      <button onclick="autoFillDeal()" style="margin-left:auto;padding:5px 12px;background:#16a34a;color:#fff;border:none;border-radius:6px;font-size:12px;cursor:pointer;font-weight:500">Pakai lagi ▸</button>
+    </div>`;
+    infoBox.style.display = 'block';
+    infoBox.dataset.lastDisc = lastDeal.disc || '';
+  } else {
+    infoBox.style.display = 'none';
+  }
+  closeMitraDD();
+};
+
+window.autoFillDeal = () => {
+  const disc = document.getElementById('mitra-deal-info').dataset.lastDisc;
+  const chk = document.getElementById('chk-deal');
+  if (!chk.checked) {
+    chk.checked = true;
+    document.getElementById('deal-fields').style.display = 'block';
+    document.getElementById('deal-toggle').classList.add('on');
+  }
+  if (disc) {
+    onBrandChange();
+    setTimeout(() => { document.getElementById('inp-disc').value = disc; }, 50);
+  }
+};
+
+window.closeMitraDD = () => document.getElementById('mitra-dropdown').classList.remove('open');
+
+// ─── Deal toggle ──────────────────────────────────────────────────────────────
+window.toggleDeal = () => {
+  const chk = document.getElementById('chk-deal');
+  chk.checked = !chk.checked;
+  document.getElementById('deal-fields').style.display = chk.checked ? 'block' : 'none';
+  document.getElementById('deal-toggle').classList.toggle('on', chk.checked);
+};
+
+// ─── Save entry ───────────────────────────────────────────────────────────────
+window.saveEntry = () => {
+  const tanggal = document.getElementById('inp-tanggal').value;
+  const brand = document.getElementById('inp-brand').value;
+  const nama = document.getElementById('inp-nama').value.trim();
+  if (!tanggal || !brand || !nama) { showNotice('save-notice', 'warn', '⚠️ Tanggal, Brand, dan Nama wajib diisi.'); return; }
+
+  const cs = document.getElementById('inp-cs').value.trim();
+  const alamat = document.getElementById('inp-alamat').value.trim();
+  const isDeal = document.getElementById('chk-deal').checked;
+
+  const entry = {
+    tanggal, brand, nama, alamat,
+    hp: document.getElementById('inp-hp').value.trim(),
+    cs, kategori: document.getElementById('inp-kategori').value,
+    catatan: document.getElementById('inp-catatan').value.trim(),
+    isDeal, disc: isDeal ? document.getElementById('inp-disc').value : '',
+    qty: isDeal ? document.getElementById('inp-qty').value.trim() : '',
+    copas: `${brand} - ${nama}/${alamat}/${cs}`,
+    ts: Date.now()
+  };
+
+  pushEntry(entry);
+  showNotice('save-notice', 'success', '✅ Berhasil disimpan!');
+
+  const ca = document.getElementById('copas-area');
+  document.getElementById('copas-text').textContent = entry.copas;
+  ca.style.display = 'block';
+};
+
+window.resetForm = () => {
+  ['inp-nama','inp-alamat','inp-hp','inp-catatan','inp-qty','inp-mitra-search'].forEach(id => document.getElementById(id).value = '');
+  document.getElementById('inp-kategori').value = '';
+  document.getElementById('inp-disc').value = '';
+  document.getElementById('chk-deal').checked = false;
+  document.getElementById('deal-fields').style.display = 'none';
+  document.getElementById('deal-toggle').classList.remove('on');
+  document.getElementById('copas-area').style.display = 'none';
+  document.getElementById('mitra-deal-info').style.display = 'none';
+  document.getElementById('save-notice').style.display = 'none';
+};
+
+window.copyText = (el) => {
+  navigator.clipboard.writeText(el.textContent).then(() => {
+    const orig = el.textContent;
+    el.textContent = '✓ Tersalin!';
+    setTimeout(() => el.textContent = orig, 1200);
+  });
+};
+
+// ─── Data table ───────────────────────────────────────────────────────────────
+window.renderData = () => {
+  populateCsFilterOption();
+  const brand = document.getElementById('f-brand').value;
+  const csF = document.getElementById('f-cs').value;
+  const type = document.getElementById('f-type').value;
+  const from = document.getElementById('f-from').value;
+  const to = document.getElementById('f-to').value;
+  const entries = state.entries.filter(e => {
+    if (brand && e.brand !== brand) return false;
+    if (csF && e.cs !== csF) return false;
+    if (type === 'fu' && e.isDeal) return false;
+    if (type === 'deal' && !e.isDeal) return false;
+    if (from && e.tanggal < from) return false;
+    if (to && e.tanggal > to) return false;
+    return true;
+  }).sort((a, b) => b.ts - a.ts);
+
+  const c = document.getElementById('data-container');
+  if (!entries.length) { c.innerHTML = '<div class="empty"><div class="empty-icon">📭</div><div class="empty-text">Tidak ada data</div></div>'; return; }
+
+  c.innerHTML = `<div class="tbl-wrap"><table>
+    <thead><tr><th>Tgl</th><th>Brand</th><th>Nama</th><th>Kota</th><th>Kategori</th><th>Status</th><th>Diskon</th><th>CS</th><th>Catatan</th><th>Copas</th><th>Aksi</th></tr></thead>
+    <tbody>${entries.map(e => {
+    const key = e._key || String(e.ts);
+    const copas = (e.copas || `${e.nama}/${e.alamat}/${e.cs}`).replace(/'/g, "\\'");
+    const discOpts = (state.discs[e.brand] || []).map(d => `<option value="${d}" ${e.disc===d?'selected':''}>${d}</option>`).join('');
+    const mine = canEditEntry(e);
+
+    const dealCell = e.isDeal
+      ? `<span class="badge badge-deal">✅ Deal</span>`
+      : (mine ? `<button class="copy-btn" style="color:#16a34a;border-color:#86efac;white-space:nowrap"
+           onclick="markAsDeal('${key}', this)">+ Tandai Deal</button>` : `<span style="color:var(--text-faint)">FU</span>`);
+
+    const discCell = e.isDeal
+      ? (mine ? `<select onchange="updateEntry('${key}',{disc:this.value})"
+           style="font-size:11px;padding:3px 6px;border:1px solid var(--border);border-radius:6px;background:var(--surface);color:var(--text);min-width:110px">
+           <option value="">— Pilih —</option>${discOpts}
+         </select>` : `<span style="font-size:11px;">${e.disc||'-'}</span>`)
+      : `<span style="color:var(--text-faint)">-</span>`;
+
+    const csBadge = e.cs ? `<span style="font-size:10px;font-weight:600;padding:2px 7px;border-radius:20px;background:${mine?'#f0fdf4':'#f4f4f4'};color:${mine?'#16a34a':'#888'};">${e.cs}</span>` : '-';
+
+    return `<tr id="row-${key}">
+      <td style="white-space:nowrap">${e.tanggal}</td>
+      <td><span class="badge badge-brand">${e.brand}</span></td>
+      <td>${e.nama}</td><td>${e.alamat || '-'}</td>
+      <td>${e.kategori || '-'}</td>
+      <td id="status-${key}">${dealCell}</td>
+      <td id="disc-${key}">${discCell}</td>
+      <td>${csBadge}</td>
+      <td style="max-width:140px;font-size:11px">${e.catatan || '-'}</td>
+      <td><button class="copy-btn" onclick="navigator.clipboard.writeText('${copas}').then(()=>{this.textContent='✓';setTimeout(()=>this.textContent='copy',1000)})">copy</button></td>
+      <td>${mine ? `<button class="copy-btn btn-danger" style="font-size:11px" onclick="deleteEntry('${key}')">hapus</button>` : `<span style="font-size:10px;color:var(--text-faint);">🔒 milik CS lain</span>`}</td>
+    </tr>`;
+  }).join('')}</tbody></table></div>`;
+};
+
+window.markAsDeal = (key, btn) => {
+  const e = state.entries.find(x => (x._key || String(x.ts)) === key);
+  if (!e) return;
+  if (!canEditEntry(e)) { showNotice('data-notice', 'warn', '🔒 Ini data milik CS lain, tidak bisa diubah.'); return; }
+  const discOpts = (state.discs[e.brand] || []).map(d => `<option value="${d}">${d}</option>`).join('');
+  const statusCell = document.getElementById('status-' + key);
+  const discCell = document.getElementById('disc-' + key);
+
+  statusCell.innerHTML = `<span class="badge badge-deal">✅ Deal</span>`;
+  discCell.innerHTML = `<div style="display:flex;gap:4px;align-items:center">
+    <select id="deal-disc-${key}" style="font-size:11px;padding:3px 6px;border:1px solid var(--border);border-radius:6px;background:var(--surface);color:var(--text);min-width:110px">
+      <option value="">— Pilih diskon —</option>${discOpts}
+    </select>
+    <button class="copy-btn" style="color:#16a34a;border-color:#86efac;white-space:nowrap"
+      onclick="confirmDeal('${key}')">Simpan</button>
+  </div>`;
+};
+
+window.confirmDeal = (key) => {
+  const e = state.entries.find(x => (x._key || String(x.ts)) === key);
+  if (e && !canEditEntry(e)) { showNotice('data-notice', 'warn', '🔒 Ini data milik CS lain, tidak bisa diubah.'); return; }
+  const disc = document.getElementById('deal-disc-' + key)?.value || '';
+  updateEntry(key, { isDeal: true, disc });
+  const discCell = document.getElementById('disc-' + key);
+  const discOpts = (state.discs[e?.brand] || []).map(d => `<option value="${d}" ${d===disc?'selected':''}>${d}</option>`).join('');
+  discCell.innerHTML = `<select onchange="updateEntry('${key}',{disc:this.value})"
+    style="font-size:11px;padding:3px 6px;border:1px solid var(--border);border-radius:6px;background:var(--surface);color:var(--text);min-width:110px">
+    <option value="">— Pilih —</option>${discOpts}
+  </select>`;
+  showNotice('data-notice', 'success', `✅ ${e?.nama || 'Mitra'} ditandai Deal!`);
+};
+
+window.deleteEntry = (key) => {
+  const e = state.entries.find(x => (x._key || String(x.ts)) === key);
+  if (e && !canEditEntry(e)) { showNotice('data-notice', 'warn', '🔒 Ini data milik CS lain, tidak bisa dihapus.'); return; }
+  if (!confirm('Hapus data ini?')) return;
+  state.entries = state.entries.filter(e => (e._key || String(e.ts)) !== key);
+  saveLocal();
+  renderData();
+  sbDelete('cs_fu_entries', key).catch(err=>console.warn('Gagal hapus dari cloud:', err.message));
+};
+
+window.exportCSV = () => {
+  const brand = document.getElementById('f-brand').value;
+  const entries = state.entries.filter(e => !brand || e.brand === brand);
+  const hdr = ['Tanggal','Brand','Nama','Alamat','No HP','CS','Kategori','Status','Diskon','Qty','Catatan','Copas'];
+  const rows = entries.map(e => [e.tanggal,e.brand,e.nama,e.alamat,e.hp,e.cs,e.kategori,e.isDeal?'Deal':'FU',e.disc,e.qty,e.catatan,e.copas].map(v=>`"${(v||'').toString().replace(/"/g,'""')}"`).join(','));
+  const a = document.createElement('a');
+  a.href = 'data:text/csv;charset=utf-8,\uFEFF' + encodeURIComponent([hdr.join(','),...rows].join('\n'));
+  a.download = `fu_data_${new Date().toISOString().split('T')[0]}.csv`;
+  a.click();
+};
+
+// ─── Report ───────────────────────────────────────────────────────────────────
+window.renderReport = () => {
+  const from = document.getElementById('r-from').value;
+  const to = document.getElementById('r-to').value;
+  const entries = state.entries.filter(e => (!from || e.tanggal >= from) && (!to || e.tanggal <= to));
+  const c = document.getElementById('report-container');
+
+  if (!entries.length) { c.innerHTML = '<div class="empty"><div class="empty-icon">📊</div><div class="empty-text">Tidak ada data pada rentang ini</div></div>'; return; }
+
+  const totalFU = entries.length;
+  const totalDeal = entries.filter(e => e.isDeal).length;
+  const rate = totalFU ? Math.round(totalDeal / totalFU * 100) : 0;
+
+  let html = `<div class="metrics">
+    <div class="metric accent"><div class="metric-num">${totalFU}</div><div class="metric-lbl">Total FU</div></div>
+    <div class="metric green"><div class="metric-num">${totalDeal}</div><div class="metric-lbl">Total Deal</div></div>
+    <div class="metric"><div class="metric-num">${totalFU - totalDeal}</div><div class="metric-lbl">Belum Deal</div></div>
+    <div class="metric warn"><div class="metric-num">${rate}%</div><div class="metric-lbl">Closing Rate</div></div>
+  </div>`;
+
+  state.brands.forEach(brand => {
+    const be = entries.filter(e => e.brand === brand);
+    if (!be.length) return;
+    const deals = be.filter(e => e.isDeal);
+    const byKat = {}; be.forEach(e => { if (e.kategori) byKat[e.kategori] = (byKat[e.kategori] || 0) + 1; });
+    const byDisc = {}; deals.forEach(e => { if (e.disc) byDisc[e.disc] = (byDisc[e.disc] || 0) + 1; });
+
+    html += `<div class="rpt-brand">
+      <div class="rpt-brand-head">
+        <div class="rpt-brand-name">${brand}</div>
+        <div style="font-size:12px;color:var(--text-muted)">FU: ${be.length} &nbsp;|&nbsp; Deal: ${deals.length} &nbsp;|&nbsp; ${be.length ? Math.round(deals.length/be.length*100) : 0}%</div>
+      </div>`;
+
+    if (Object.keys(byKat).length) {
+      html += '<div style="font-size:11px;font-weight:600;color:var(--text-faint);text-transform:uppercase;letter-spacing:0.05em;margin-bottom:6px">Kategori FU</div><div class="rpt-stats">';
+      Object.entries(byKat).forEach(([k, v]) => html += `<span class="badge badge-fu">${k}: ${v}</span>`);
+      html += '</div>';
+    }
+    if (Object.keys(byDisc).length) {
+      html += '<div style="font-size:11px;font-weight:600;color:var(--text-faint);text-transform:uppercase;letter-spacing:0.05em;margin:10px 0 6px">Diskon Deal</div><div class="rpt-stats">';
+      Object.entries(byDisc).forEach(([k, v]) => html += `<span class="badge badge-disc">${k}: ${v}</span>`);
+      html += '</div>';
+    }
+    html += '</div>';
+  });
+
+  // CS performance table
+  const byCS = {};
+  entries.forEach(e => {
+    if (!e.cs) return;
+    if (!byCS[e.cs]) byCS[e.cs] = { fu: 0, deal: 0 };
+    byCS[e.cs].fu++;
+    if (e.isDeal) byCS[e.cs].deal++;
+  });
+  if (Object.keys(byCS).length) {
+    html += `<div class="card"><div class="card-title">Performa CS</div>
+      <div class="tbl-wrap"><table><thead><tr><th>CS</th><th>FU</th><th>Deal</th><th>Closing Rate</th></tr></thead><tbody>
+      ${Object.entries(byCS).sort((a,b)=>b[1].deal-a[1].deal).map(([cs,v])=>
+        `<tr><td>${cs}</td><td>${v.fu}</td><td>${v.deal}</td><td>${Math.round(v.deal/v.fu*100)}%</td></tr>`
+      ).join('')}</tbody></table></div></div>`;
+  }
+
+  c.innerHTML = html;
+};
+
+// ─── Mitra admin ──────────────────────────────────────────────────────────────
+window.addMitra = () => {
+  const nama = document.getElementById('m-nama').value.trim();
+  const alamat = document.getElementById('m-alamat').value.trim();
+  const hp = document.getElementById('m-hp').value.trim();
+  const brand = document.getElementById('m-brand').value;
+  if (!nama) { showNotice('mitra-notice', 'warn', '⚠️ Nama wajib diisi'); return; }
+  pushMitra({ nama, alamat, hp, brand, ts: Date.now() });
+  showNotice('mitra-notice', 'success', `✅ Mitra "${nama}" ditambahkan`);
+  ['m-nama','m-alamat','m-hp'].forEach(id => document.getElementById(id).value = '');
+};
+
+window.importCSV = (input) => {
+  const file = input.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = e => {
+    const lines = e.target.result.split('\n');
+    const header = lines[0].toLowerCase().split(',').map(h => h.trim().replace(/"/g,''));
+    let count = 0;
+    lines.slice(1).forEach(line => {
+      if (!line.trim()) return;
+      const cols = line.split(',').map(c => c.trim().replace(/^"|"$/g,''));
+      const mitra = {};
+      header.forEach((h, i) => mitra[h] = cols[i] || '');
+      if (mitra.nama) { pushMitra({ nama: mitra.nama, alamat: mitra.alamat || mitra.kota || '', hp: mitra.hp || '', brand: mitra.brand || '', ts: Date.now() }); count++; }
+    });
+    showNotice('mitra-notice', 'success', `✅ ${count} mitra berhasil diimport`);
+  };
+  reader.readAsText(file);
+};
+
+window.renderMitraList = () => {
+  const q = document.getElementById('search-mitra').value.toLowerCase();
+  const brand = document.getElementById('filter-mitra-brand').value;
+  const list = state.mitras.filter(m =>
+    (!brand || m.brand === brand) &&
+    (!q || m.nama?.toLowerCase().includes(q) || m.hp?.includes(q) || m.alamat?.toLowerCase().includes(q))
+  );
+  const c = document.getElementById('mitra-list-container');
+  if (!list.length) { c.innerHTML = '<div class="empty"><div class="empty-icon">👥</div><div class="empty-text">Belum ada mitra</div></div>'; return; }
+  c.innerHTML = `<div class="tbl-wrap"><table>
+    <thead><tr><th>Nama</th><th>Kota</th><th>No HP</th><th>Brand</th><th></th></tr></thead>
+    <tbody>${list.map(m => `<tr>
+      <td>${m.nama}</td><td>${m.alamat||'-'}</td><td>${m.hp||'-'}</td>
+      <td>${m.brand?`<span class="badge badge-brand">${m.brand}</span>`:'-'}</td>
+      <td><button class="btn btn-sm btn-danger" onclick="deleteMitra('${m._key||m.nama}')">Hapus</button></td>
+    </tr>`).join('')}</tbody></table></div>`;
+};
+
+// ─── Settings ─────────────────────────────────────────────────────────────────
+window.renderSettings = () => {
+  populateBrandDropdowns();
+  const bt = document.getElementById('brand-tags');
+  bt.innerHTML = '';
+  state.brands.forEach(b => {
+    const t = document.createElement('span'); t.className = 'tag';
+    t.innerHTML = `${b}<button class="tag-del" onclick="removeBrand('${b}')">×</button>`;
+    bt.appendChild(t);
+  });
+  const kt = document.getElementById('kat-tags');
+  kt.innerHTML = '';
+  state.kategori.forEach(k => {
+    const t = document.createElement('span'); t.className = 'tag';
+    t.innerHTML = `${k}<button class="tag-del" onclick="removeKat('${k}')">×</button>`;
+    kt.appendChild(t);
+  });
+  renderDiscTags();
+};
+
+window.renderDiscTags = () => {
+  const brand = document.getElementById('disc-brand-sel').value || state.brands[0];
+  const dt = document.getElementById('disc-tags');
+  dt.innerHTML = '';
+  (state.discs[brand] || []).forEach(d => {
+    const t = document.createElement('span'); t.className = 'tag';
+    t.innerHTML = `${d}<button class="tag-del" onclick="removeDisc('${brand}','${d}')">×</button>`;
+    dt.appendChild(t);
+  });
+};
+
+window.addBrand = () => {
+  const v = document.getElementById('new-brand').value.trim();
+  if (!v || state.brands.includes(v)) return;
+  state.brands.push(v);
+  if (!state.discs[v]) state.discs[v] = [];
+  saveConfig('brands', state.brands);
+  saveConfig('discs', state.discs);
+  saveLocal(); renderSettings();
+  document.getElementById('new-brand').value = '';
+};
+window.removeBrand = b => { state.brands = state.brands.filter(x => x !== b); saveConfig('brands', state.brands); saveLocal(); renderSettings(); };
+window.addKat = () => {
+  const v = document.getElementById('new-kat').value.trim();
+  if (!v || state.kategori.includes(v)) return;
+  state.kategori.push(v); saveConfig('kategori', state.kategori); saveLocal(); renderSettings();
+  document.getElementById('new-kat').value = '';
+};
+window.removeKat = k => { state.kategori = state.kategori.filter(x => x !== k); saveConfig('kategori', state.kategori); saveLocal(); renderSettings(); };
+window.addDisc = () => {
+  const brand = document.getElementById('disc-brand-sel').value || state.brands[0];
+  const v = document.getElementById('new-disc').value.trim();
+  if (!v) return;
+  if (!state.discs[brand]) state.discs[brand] = [];
+  if (!state.discs[brand].includes(v)) state.discs[brand].push(v);
+  saveConfig('discs', state.discs); saveLocal(); renderDiscTags();
+  document.getElementById('new-disc').value = '';
+};
+window.removeDisc = (brand, d) => { state.discs[brand] = state.discs[brand].filter(x => x !== d); saveConfig('discs', state.discs); saveLocal(); renderDiscTags(); };
+
+// ─── Notice helper ────────────────────────────────────────────────────────────
+function showNotice(id, type, msg) {
+  const el = document.getElementById(id);
+  el.className = `notice notice-${type}`;
+  el.textContent = msg;
+  el.style.display = 'block';
+  setTimeout(() => el.style.display = 'none', 3000);
+}
+
+// ─── Init ─────────────────────────────────────────────────────────────────────
+document.getElementById('inp-tanggal').value = new Date().toISOString().split('T')[0];
+populateBrandDropdowns();
+populateKategoriDropdown();
+onBrandChange();
+setRange('month');
+</script>
+</body>
+</html>
